@@ -1,0 +1,51 @@
+services:
+  kv-front:
+    build:
+      context: ./kv-front
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./kv-front:/app
+      - /app/node_modules
+    networks:
+      - dev-network
+
+  kv-wsrelay:
+    build:
+      context: ./kv-wsrelay
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./kv-wsrelay:/app
+      - go-cache:/go/pkg/mod
+    environment:
+      - GO_ENV=development
+    networks:
+      - dev-network
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - kv-front
+      - kv-wsrelay
+    networks:
+      - dev-network
+
+networks:
+  dev-network:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
+  go-cache:

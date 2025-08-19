@@ -1,0 +1,39 @@
+# Caddyfile for HTTPS development proxy
+
+localhost:443 {
+	tls internal
+
+	# WebSocket API routing
+	handle /api/* {
+		reverse_proxy kv-wsrelay:8080
+	}
+
+	# Frontend routing (default)
+	handle {
+		reverse_proxy kv-front:5173
+	}
+}
+
+:443 {
+	tls internal {
+		on_demand
+	}
+
+	# WebSocket API routing
+	handle /api/* {
+		reverse_proxy kv-wsrelay:8080 {
+			header_up Host localhost
+		}
+	}
+
+	# Frontend routing (default)
+	handle {
+		reverse_proxy kv-front:5173 {
+			header_up Host localhost
+		}
+	}
+}
+
+:80 {
+	redir https://{host}{uri} permanent
+}
