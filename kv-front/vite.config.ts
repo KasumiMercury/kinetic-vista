@@ -1,14 +1,9 @@
-import { reactRouter } from "@react-router/dev/vite";
-import { cloudflare } from "@cloudflare/vite-plugin";
-import tailwindcss from "@tailwindcss/vite";
-import { defineConfig } from "vite";
-import tsconfigPaths from "vite-tsconfig-paths";
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react-swc'
 
+import { cloudflare } from "@cloudflare/vite-plugin";
+
+// https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    cloudflare({ viteEnvironment: { name: "ssr" } }),
-    tailwindcss(),
-    reactRouter(),
-    tsconfigPaths(),
-  ],
-});
+  plugins: [react(), cloudflare()],
+})
