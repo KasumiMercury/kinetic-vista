@@ -4,9 +4,11 @@ import {
 	OrbitControls,
 	Sky,
 } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
-import { Suspense, useRef } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { AllModels, type ModelComponent } from "./model";
+import { getLocationFromEnvironment } from "./utils/geolocation";
+import { calculateSolarPosition, calculateSkyParameters, type SkyParameters } from "./utils/solarPosition";
 
 type SceneProps = {
 	rotation: number;
@@ -16,6 +18,33 @@ type SceneProps = {
 export function Scene({ rotation, useCameraControls }: SceneProps) {
 	const { ACTION } = CameraControlsImpl;
 	const controlsRef = useRef<CameraControlsImpl>(null);
+	const { gl } = useThree();
+	const [skyParams, setSkyParams] = useState<SkyParameters>({
+		sunPosition: [0, 1, 0],
+		turbidity: 10,
+		rayleigh: 1,
+		mieCoefficient: 0.005,
+		mieDirectionalG: 0.7,
+		exposure: 1,
+	});
+
+	useEffect(() => {
+		const initializeSkyParameters = () => {
+			try {
+				const coordinates = getLocationFromEnvironment();
+				const currentTime = new Date();
+				const solarPos = calculateSolarPosition(currentTime, coordinates);
+				const params = calculateSkyParameters(solarPos);
+				setSkyParams(params);
+
+				gl.toneMappingExposure = params.exposure;
+			} catch (error) {
+				console.error("Failed to calculate sky parameters:", error);
+			}
+		};
+
+		initializeSkyParameters();
+	}, [gl]);
 
 	const convertCompassToTarget = (compassDegrees: number, radius: number) => {
 		const rotationRad = ((-compassDegrees + 90) * Math.PI) / 180;
@@ -39,7 +68,13 @@ export function Scene({ rotation, useCameraControls }: SceneProps) {
 
 	return (
 		<>
-			<Sky />
+			<Sky 
+				sunPosition={skyParams.sunPosition}
+				turbidity={skyParams.turbidity}
+				rayleigh={skyParams.rayleigh}
+				mieCoefficient={skyParams.mieCoefficient}
+				mieDirectionalG={skyParams.mieDirectionalG}
+			/>
 
 			<Suspense fallback={null}>
 				{AllModels.map(({ path, component: ModelComponent }) => {
