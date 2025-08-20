@@ -4,7 +4,7 @@ import { useId, useState } from "react";
 import { Scene } from "./Scene.tsx";
 
 function App() {
-	const [rotation, setRotation] = useState(0);
+	const [rotation, setRotation] = useState(0); // 度数で管理 (0-360°)
 	const [useCameraControls, setUseCameraControls] = useState(true);
 	const sliderId = useId();
 
@@ -33,15 +33,15 @@ function App() {
 				</label>
 				<br />
 				<label htmlFor={sliderId}>
-					Camera Rotation: {Math.round((rotation * 180) / Math.PI)}°
+					Camera Rotation: {Math.round(rotation)}°
 				</label>
 				<br />
 				<input
 					id={sliderId}
 					type="range"
 					min={0}
-					max={Math.PI * 2}
-					step={0.01}
+					max={360}
+					step={10}
 					value={rotation}
 					onChange={(e) => setRotation(parseFloat(e.target.value))}
 					style={{ width: "200px" }}

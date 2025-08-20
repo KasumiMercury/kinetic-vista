@@ -17,15 +17,23 @@ export function Scene({ rotation, useCameraControls }: SceneProps) {
 	const { ACTION } = CameraControlsImpl;
 	const controlsRef = useRef<CameraControlsImpl>(null);
 
+	const convertCompassToTarget = (compassDegrees: number, radius: number) => {
+		const rotationRad = ((-compassDegrees + 90) * Math.PI) / 180;
+		
+		return {
+			x: Math.cos(rotationRad) * radius,  // 東西方向
+			z: -Math.sin(rotationRad) * radius  // 南北方向
+		};
+	};
+
 	useFrame(() => {
 		if (controlsRef.current && useCameraControls) {
 			controlsRef.current.setPosition(0, 0.1, 0);
 
 			const targetRadius = 5;
-			const targetX = Math.sin(rotation) * targetRadius;
-			const targetZ = Math.cos(rotation) * targetRadius;
+			const target = convertCompassToTarget(rotation, targetRadius);
 
-			controlsRef.current.setTarget(targetX, 0, targetZ);
+			controlsRef.current.setTarget(target.x, 0, target.z);
 		}
 	});
 
