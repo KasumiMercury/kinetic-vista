@@ -1,6 +1,6 @@
 import { CameraControls, CameraControlsImpl, Sky } from "@react-three/drei";
-import { Suspense, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
+import { Suspense, useRef } from "react";
 import { AllModels, type ModelComponent } from "./model";
 
 type SceneProps = {

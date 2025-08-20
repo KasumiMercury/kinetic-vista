@@ -1,7 +1,7 @@
 import "./App.css";
 import { Canvas } from "@react-three/fiber";
+import { useId, useState } from "react";
 import { Scene } from "./Scene..tsx";
-import { useState, useId } from "react";
 
 function App() {
 	const [rotation, setRotation] = useState(0);
