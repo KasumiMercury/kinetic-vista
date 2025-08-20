@@ -1,8 +1,27 @@
-import { OrbitControls, Sky } from "@react-three/drei";
-import { Suspense } from "react";
+import { CameraControls, CameraControlsImpl, Sky } from "@react-three/drei";
+import { Suspense, useRef } from "react";
+import { useFrame } from "@react-three/fiber";
 import { AllModels, type ModelComponent } from "./model";
 
-export function Scene() {
+type SceneProps = {
+	rotation: number;
+};
+
+export function Scene({ rotation }: SceneProps) {
+	const { ACTION } = CameraControlsImpl;
+	const controlsRef = useRef<CameraControlsImpl>(null);
+
+	useFrame(() => {
+		if (controlsRef.current) {
+			const radius = 10;
+			const x = Math.sin(rotation) * radius;
+			const z = Math.cos(rotation) * radius;
+			
+			controlsRef.current.setPosition(x, 1, z);
+			controlsRef.current.setTarget(0, 0, 0);
+		}
+	});
+
 	return (
 		<>
 			<Sky />
@@ -17,7 +36,21 @@ export function Scene() {
 			<pointLight color={"#ffffff"} intensity={1} position={[0, 0, 0]} />
 
 			<ambientLight intensity={10} />
-			<OrbitControls />
+			<CameraControls
+				ref={controlsRef}
+				makeDefault
+				mouseButtons={{
+					left: ACTION.NONE,
+					middle: ACTION.NONE,
+					right: ACTION.NONE,
+					wheel: ACTION.NONE,
+				}}
+				touches={{
+					one: ACTION.NONE,
+					two: ACTION.NONE,
+					three: ACTION.NONE,
+				}}
+			/>
 		</>
 	);
 }
