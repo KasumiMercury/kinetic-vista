@@ -46,4 +46,6 @@ export function Building(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
+export default Building;
+
 useGLTF.preload("/object-transformed.glb");

@@ -1,9 +1,14 @@
-import { Building } from './Building';
+import type {ComponentType, JSX} from 'react';
 
-export { Building };
+type ModelComponentType = ComponentType<JSX.IntrinsicElements["group"]>;
 
-export const AllModels = [
-  Building,
-] as const;
+const modules = import.meta.glob<{ default: ModelComponentType }>('./*.tsx', {
+  eager: true,
+  import: 'default'
+});
+export const AllModels = Object.entries(modules).map(([path, component]) => ({
+  path: path.replace('./', '').replace('.tsx', ''),
+  component: component as unknown as ModelComponentType
+}));
 
-export type ModelComponent = typeof AllModels[number];
+export type ModelComponent = ModelComponentType;

@@ -1,6 +1,6 @@
 import { OrbitControls, Sky } from "@react-three/drei";
 import { Suspense } from "react";
-import { AllModels } from "./model";
+import { AllModels, type ModelComponent } from "./model";
 
 export function Scene() {
 	return (
@@ -8,9 +8,10 @@ export function Scene() {
 			<Sky />
 
 			<Suspense fallback={null}>
-				{AllModels.map((ModelComponent, index) => (
-					<ModelComponent key={index} />
-				))}
+				{AllModels.map(({ path, component: ModelComponent }) => {
+					const Component = ModelComponent as ModelComponent;
+					return <Component key={path} />;
+				})}
 			</Suspense>
 
 			<pointLight color={"#ffffff"} intensity={1} position={[0, 0, 0]} />
