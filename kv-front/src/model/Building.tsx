@@ -16,7 +16,7 @@ type GLTFResult = GLTF & {
   // animations: GLTFAction[]
 };
 
-export function Model(props: JSX.IntrinsicElements["group"]) {
+export function Building(props: JSX.IntrinsicElements["group"]) {
   const {nodes} = useGLTF("/object-transformed.glb") as unknown as GLTFResult;
   return (
       <group {...props} dispose={null}>
