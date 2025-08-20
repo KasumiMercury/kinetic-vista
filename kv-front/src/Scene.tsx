@@ -8,7 +8,11 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { AllModels, type ModelComponent } from "./model";
 import { getLocationFromEnvironment } from "./utils/geolocation";
-import { calculateSolarPosition, calculateSkyParameters, type SkyParameters } from "./utils/solarPosition";
+import {
+	calculateSolarPosition,
+	calculateSkyParameters,
+	type SkyParameters,
+} from "./utils/solarPosition";
 
 type SceneProps = {
 	rotation: number;
@@ -48,10 +52,10 @@ export function Scene({ rotation, useCameraControls }: SceneProps) {
 
 	const convertCompassToTarget = (compassDegrees: number, radius: number) => {
 		const rotationRad = ((-compassDegrees + 90) * Math.PI) / 180;
-		
+
 		return {
-			x: Math.cos(rotationRad) * radius,  // 東西方向
-			z: -Math.sin(rotationRad) * radius  // 南北方向
+			x: Math.cos(rotationRad) * radius, // 東西方向
+			z: -Math.sin(rotationRad) * radius, // 南北方向
 		};
 	};
 
@@ -68,7 +72,7 @@ export function Scene({ rotation, useCameraControls }: SceneProps) {
 
 	return (
 		<>
-			<Sky 
+			<Sky
 				sunPosition={skyParams.sunPosition}
 				turbidity={skyParams.turbidity}
 				rayleigh={skyParams.rayleigh}
