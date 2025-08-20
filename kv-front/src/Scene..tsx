@@ -1,18 +1,19 @@
-import {CameraControls, CameraControlsImpl, Sky} from "@react-three/drei";
+import {CameraControls, CameraControlsImpl, OrbitControls, Sky} from "@react-three/drei";
 import {useFrame} from "@react-three/fiber";
 import {Suspense, useRef} from "react";
 import {AllModels, type ModelComponent} from "./model";
 
 type SceneProps = {
   rotation: number;
+  useCameraControls: boolean;
 };
 
-export function Scene({rotation}: SceneProps) {
+export function Scene({rotation, useCameraControls}: SceneProps) {
   const {ACTION} = CameraControlsImpl;
   const controlsRef = useRef<CameraControlsImpl>(null);
 
   useFrame(() => {
-    if (controlsRef.current) {
+    if (controlsRef.current && useCameraControls) {
       controlsRef.current.setPosition(0, 0.1, 0);
 
       const targetRadius = 5;
@@ -36,8 +37,8 @@ export function Scene({rotation}: SceneProps) {
 
         <ambientLight intensity={10}/>
 
-        {/*<OrbitControls></OrbitControls>*/}
-        <CameraControls
+        {useCameraControls ? (
+          <CameraControls
             ref={controlsRef}
             makeDefault
             mouseButtons={{
@@ -51,7 +52,10 @@ export function Scene({rotation}: SceneProps) {
               two: ACTION.NONE,
               three: ACTION.NONE,
             }}
-        />
+          />
+        ) : (
+          <OrbitControls />
+        )}
       </>
   );
 }

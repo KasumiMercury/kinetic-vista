@@ -5,11 +5,12 @@ import {Scene} from "./Scene..tsx";
 
 function App() {
   const [rotation, setRotation] = useState(0);
+  const [useCameraControls, setUseCameraControls] = useState(true);
   const sliderId = useId();
 
   return (
       <div style={{width: "100vw", height: "100vh"}}>
-        {/* Camera Rotation Slider */}
+        {/* Camera Controls */}
         <div style={{
           position: "absolute",
           top: "20px",
@@ -20,6 +21,15 @@ function App() {
           padding: "10px",
           borderRadius: "5px"
         }}>
+          <label>
+            <input
+              type="checkbox"
+              checked={useCameraControls}
+              onChange={(e) => setUseCameraControls(e.target.checked)}
+            />
+            Use CameraControls (with slider)
+          </label>
+          <br/>
           <label htmlFor={sliderId}>
             Camera Rotation: {Math.round(rotation * 180 / Math.PI)}°
           </label>
@@ -37,7 +47,7 @@ function App() {
         </div>
 
         <Canvas>
-          <Scene rotation={rotation}/>
+          <Scene rotation={rotation} useCameraControls={useCameraControls}/>
         </Canvas>
       </div>
   );
