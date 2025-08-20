@@ -13,12 +13,13 @@ export function Scene({ rotation }: SceneProps) {
 
 	useFrame(() => {
 		if (controlsRef.current) {
-			const radius = 10;
-			const x = Math.sin(rotation) * radius;
-			const z = Math.cos(rotation) * radius;
+			controlsRef.current.setPosition(0, 0.8, 0);
 			
-			controlsRef.current.setPosition(x, 1, z);
-			controlsRef.current.setTarget(0, 0, 0);
+			const targetRadius = 5;
+			const targetX = Math.sin(rotation) * targetRadius;
+			const targetZ = Math.cos(rotation) * targetRadius;
+			
+			controlsRef.current.setTarget(targetX, 0.5, targetZ);
 		}
 	});
 
@@ -32,8 +33,6 @@ export function Scene({ rotation }: SceneProps) {
 					return <Component key={path} />;
 				})}
 			</Suspense>
-
-			<pointLight color={"#ffffff"} intensity={1} position={[0, 0, 0]} />
 
 			<ambientLight intensity={10} />
 			<CameraControls
