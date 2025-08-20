@@ -31,3 +31,5 @@ dist-ssr
 !.env.example
 
 *.glb
+src/model
+!src/model/index.ts
