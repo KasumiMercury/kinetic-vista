@@ -1,0 +1,24 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  GREETING: Hello, World!
+
+tasks:
+  gen-model:
+    desc: Generate model tsx files
+    vars:
+      MODEL_NAMES: '{{.CLI_ARGS}}'
+    cmds:
+      - |
+        if [ -z "{{.MODEL_NAMES}}" ]; then
+          echo "Model name(s) required."
+          exit 1
+        fi
+        
+        for model_name in {{.MODEL_NAMES}}; do
+          echo "Generating ${model_name}.tsx..."
+          npx gltfjsx ./model/${model_name}.glb --types --transform --exportdefault --output ./src/model/${model_name}.tsx
+        done
+    silent: true
