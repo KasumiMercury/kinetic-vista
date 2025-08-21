@@ -5,6 +5,12 @@ interface DirectionalColorMaterialProps {
 	transparent?: boolean;
 	opacity?: number;
 	side?: THREE.Side;
+	positiveXColor?: string; // +X軸方向の色
+	negativeXColor?: string; // -X軸方向の色
+	positiveYColor?: string; // +Y軸方向の色
+	negativeYColor?: string; // -Y軸方向の色
+	positiveZColor?: string; // +Z軸方向の色
+	negativeZColor?: string; // -Z軸方向の色
 }
 
 export const DirectionalColorMaterial = forwardRef<
@@ -12,7 +18,18 @@ export const DirectionalColorMaterial = forwardRef<
 	DirectionalColorMaterialProps
 >(
 	(
-		{ transparent = true, opacity = 0.5, side = THREE.DoubleSide, ...props },
+		{ 
+			transparent = false, 
+			opacity = 0.5, 
+			side = THREE.FrontSide,
+			positiveXColor = "#ffb3b3",
+			negativeXColor = "#b3ffb3",
+			positiveYColor = "#b3b3ff",
+			negativeYColor = "#ffb3ff",
+			positiveZColor = "#ffb3ff",
+			negativeZColor = "#b3ffff",
+			...props 
+		},
 		ref,
 	) => {
 		return (
@@ -23,6 +40,14 @@ export const DirectionalColorMaterial = forwardRef<
 				side={side}
 				{...props}
 				onBeforeCompile={(shader) => {
+					// uniform変数を追加
+					shader.uniforms.uPositiveXColor = { value: new THREE.Color(positiveXColor) };
+					shader.uniforms.uNegativeXColor = { value: new THREE.Color(negativeXColor) };
+					shader.uniforms.uPositiveYColor = { value: new THREE.Color(positiveYColor) };
+					shader.uniforms.uNegativeYColor = { value: new THREE.Color(negativeYColor) };
+					shader.uniforms.uPositiveZColor = { value: new THREE.Color(positiveZColor) };
+					shader.uniforms.uNegativeZColor = { value: new THREE.Color(negativeZColor) };
+
 					shader.vertexShader = shader.vertexShader.replace(
 						"#include <common>",
 						`
@@ -47,6 +72,12 @@ export const DirectionalColorMaterial = forwardRef<
           #include <common>
           varying vec3 vWorldNormal;
           varying vec3 vWorldPosition;
+          uniform vec3 uPositiveXColor;
+          uniform vec3 uNegativeXColor;
+          uniform vec3 uPositiveYColor;
+          uniform vec3 uNegativeYColor;
+          uniform vec3 uPositiveZColor;
+          uniform vec3 uNegativeZColor;
           `,
 					);
 
@@ -59,8 +90,19 @@ export const DirectionalColorMaterial = forwardRef<
             discard;
           }
           
-          vec3 directionalColor = normalizedWorldNormal * 0.5 + 0.5;
-          vec4 diffuseColor = vec4( directionalColor, opacity );
+          // 各軸方向の重みを計算
+          vec3 absNormal = abs(normalizedWorldNormal);
+          vec3 weights = absNormal / (absNormal.x + absNormal.y + absNormal.z);
+          
+          // 各軸方向の色を補間
+          vec3 xColor = mix(uNegativeXColor, uPositiveXColor, (normalizedWorldNormal.x + 1.0) * 0.5);
+          vec3 yColor = mix(uNegativeYColor, uPositiveYColor, (normalizedWorldNormal.y + 1.0) * 0.5);
+          vec3 zColor = mix(uNegativeZColor, uPositiveZColor, (normalizedWorldNormal.z + 1.0) * 0.5);
+          
+          // 重み付け合成
+          vec3 finalColor = xColor * weights.x + yColor * weights.y + zColor * weights.z;
+          
+          vec4 diffuseColor = vec4( finalColor, opacity );
           `,
 					);
 				}}
