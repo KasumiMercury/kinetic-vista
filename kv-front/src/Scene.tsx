@@ -6,11 +6,12 @@ import {
 } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useEffect, useRef, useState } from "react";
+import { WaveWireframeMesh } from "./components/WaveWireframeMesh";
 import { AllModels, type ModelComponent } from "./model";
 import { getLocationFromEnvironment } from "./utils/geolocation";
 import {
-	calculateSolarPosition,
 	calculateSkyParameters,
+	calculateSolarPosition,
 	type SkyParameters,
 } from "./utils/solarPosition";
 
@@ -86,6 +87,21 @@ export function Scene({ rotation, useCameraControls }: SceneProps) {
 					return <Component key={path} />;
 				})}
 			</Suspense>
+
+			<WaveWireframeMesh
+				size={30}
+				segments={96}
+				waveSpeed={1.2}
+				waveAmplitude={0.4}
+				waveFrequency={0.6}
+				waveDecay={0.06}
+				noiseScale={0.15}
+				noiseAmplitude={0.08}
+				color="#00ccee"
+				position={[0, 0, 0]}
+				waveCount={4}
+				waveInterval={1.8}
+			/>
 
 			<ambientLight intensity={10} />
 
