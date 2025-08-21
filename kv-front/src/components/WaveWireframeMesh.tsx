@@ -63,6 +63,38 @@ export function WaveWireframeMesh({
     return { originalPositions: positions, noiseValues: noise }
   }, [size, segments, noiseScale])
 
+  useFrame(({ clock }) => {
+    if (!geometryRef.current) return
+
+    const time = clock.getElapsedTime()
+    const positions = geometryRef.current.attributes.position
+
+    for (let i = 0; i < positions.count; i++) {
+      const x = originalPositions[i * 3]     // 元のX座標（回転後もX）
+      const y = originalPositions[i * 3 + 1] // 元のY座標（回転後はZ）
+      
+      const distance = Math.sqrt(x * x + y * y)
+      
+      let totalWave = 0
+      for (let w = 0; w < waveCount; w++) {
+        const phaseOffset = w * waveInterval
+        const frequency = waveFrequency * (1 + w * 0.3)
+        const amplitude = waveAmplitude * (1 - w * 0.2)
+        
+        const wave = Math.sin(distance * frequency - (time * waveSpeed + phaseOffset)) * 
+                     amplitude * 
+                     Math.exp(-distance * waveDecay)
+        totalWave += wave
+      }
+      
+      const noiseValue = noiseValues[i] * noiseAmplitude * (1 + Math.sin(time * 0.5) * 0.2)
+      
+      positions.setZ(i, totalWave + noiseValue)
+    }
+
+    positions.needsUpdate = true
+  })
+
   return (
     <mesh ref={meshRef} position={position} rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry
