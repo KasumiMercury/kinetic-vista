@@ -2,6 +2,13 @@ import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 
+// Global object pool for performance optimization
+const tempVector1 = new THREE.Vector3();
+const tempVector2 = new THREE.Vector3();
+const nearColor = new THREE.Color();
+const farColor = new THREE.Color();
+const tempColor = new THREE.Color();
+
 interface ParticleNetworkProps {
 	particleCount?: number;
 	centerPosition?: [number, number, number];
@@ -14,6 +21,7 @@ interface ParticleNetworkProps {
 	particleSize?: number;
 	velocityRange?: number;
 	densityFalloff?: number;
+	adaptive?: boolean;
 }
 
 export function ParticleNetwork({
@@ -28,11 +36,17 @@ export function ParticleNetwork({
 	particleSize = 4,
 	velocityRange = 0.5,
 	densityFalloff = 0,
+	adaptive = false,
 }: ParticleNetworkProps) {
 	const particlesRef = useRef<THREE.Points>(null);
 	const linesRef = useRef<THREE.LineSegments>(null);
+	const lastLineCount = useRef(0);
 
-	const { particlePositions, particleVelocities, linePositions, lineColors } =
+	// スマートなフレーム分割用の状態
+	const pairBatchIndex = useRef(0);
+	const linkStateMap = useRef<Map<string, { positions: number[], colors: number[], valid: boolean }>>(new Map());
+
+	const { particlePositions, particleVelocities, linePositions, lineColors, totalPairs, batchSize } =
 		useMemo(() => {
 			const positions = new Float32Array(particleCount * 3);
 			const velocities = new Float32Array(particleCount * 3);
@@ -68,15 +82,25 @@ export function ParticleNetwork({
 			const linePos = new Float32Array(maxConnections * 3 * 2);
 			const lineCol = new Float32Array(maxConnections * 3 * 2);
 
+			// 総ペア数の計算（i < jの組み合わせ）
+			const totalPairCount = (particleCount * (particleCount - 1)) / 2;
+			
+			// 適応的バッチサイズ：フレームレート60fpsを目標に調整
+			const adaptiveBatchSize = adaptive && particleCount > 300 
+				? Math.max(Math.floor(totalPairCount / 4), 50) // 4フレームで全体をカバー
+				: totalPairCount; // 非適応モードでは全て一度に処理
+
 			return {
 				particlePositions: positions,
 				particleVelocities: velocities,
 				linePositions: linePos,
 				lineColors: lineCol,
+				totalPairs: totalPairCount,
+				batchSize: adaptiveBatchSize,
 			};
-		}, [particleCount, centerPosition, yRange, spawnRange, velocityRange, densityFalloff]);
+		}, [particleCount, centerPosition, yRange, spawnRange, velocityRange, densityFalloff, adaptive]);
 
-	useFrame(() => {
+	useFrame((_state, _delta) => {
 		if (!particlesRef.current || !linesRef.current) return;
 
 		const positions = particlesRef.current.geometry.attributes.position
@@ -88,8 +112,7 @@ export function ParticleNetwork({
 		const lineColors = linesRef.current.geometry.attributes.color
 			.array as Float32Array;
 
-		let lineVertexIndex = 0;
-
+		// パーティクル位置の更新
 		const boxSizeX = spawnRange;
 		const boxSizeY = yRange;
 		const boxSizeZ = spawnRange;
@@ -124,78 +147,159 @@ export function ParticleNetwork({
 			}
 		}
 
-		for (let i = 0; i < particleCount; i++) {
-			const i3 = i * 3;
-			const p1 = new THREE.Vector3(
-				positions[i3],
-				positions[i3 + 1],
-				positions[i3 + 2],
-			);
+		// リンク計算：スマートなフレーム分割
+		if (adaptive && particleCount > 300) {
+			// バッチ処理で一部のペアを更新
+			const currentBatchStart = pairBatchIndex.current * batchSize;
+			const currentBatchEnd = Math.min(currentBatchStart + batchSize, totalPairs);
+			
+			// 現在のバッチのペアを処理
+			let pairIndex = 0;
+			let processedPairs = 0;
+			
+			for (let i = 0; i < particleCount && processedPairs < batchSize; i++) {
+				for (let j = i + 1; j < particleCount && processedPairs < batchSize; j++) {
+					if (pairIndex >= currentBatchStart && pairIndex < currentBatchEnd) {
+						const i3 = i * 3;
+						const j3 = j * 3;
+						const pairKey = `${i}-${j}`;
 
-			for (let j = i + 1; j < particleCount; j++) {
-				const j3 = j * 3;
-				const p2 = new THREE.Vector3(
-					positions[j3],
-					positions[j3 + 1],
-					positions[j3 + 2],
-				);
+						tempVector1.set(positions[i3], positions[i3 + 1], positions[i3 + 2]);
+						tempVector2.set(positions[j3], positions[j3 + 1], positions[j3 + 2]);
 
-				const distSq = p1.distanceToSquared(p2);
+						const distSq = tempVector1.distanceToSquared(tempVector2);
 
-				// Calculate dynamic link distance based on distance from center
-				const centerDistanceP1 =
-					Math.sqrt(
-						(p1.x - centerPosition[0]) * (p1.x - centerPosition[0]) +
-							(p1.z - centerPosition[2]) * (p1.z - centerPosition[2]),
-					) / spawnRange;
-				const centerDistanceP2 =
-					Math.sqrt(
-						(p2.x - centerPosition[0]) * (p2.x - centerPosition[0]) +
-							(p2.z - centerPosition[2]) * (p2.z - centerPosition[2]),
-					) / spawnRange;
+						// Dynamic link distance calculation
+						const dx1 = tempVector1.x - centerPosition[0];
+						const dz1 = tempVector1.z - centerPosition[2];
+						const centerDistanceSqP1 = dx1 * dx1 + dz1 * dz1;
+						const centerDistanceP1 = Math.sqrt(centerDistanceSqP1) / spawnRange;
+						
+						const dx2 = tempVector2.x - centerPosition[0];
+						const dz2 = tempVector2.z - centerPosition[2];
+						const centerDistanceSqP2 = dx2 * dx2 + dz2 * dz2;
+						const centerDistanceP2 = Math.sqrt(centerDistanceSqP2) / spawnRange;
 
-				// Average distance from center for both particles
-				const avgCenterDistance = (centerDistanceP1 + centerDistanceP2) / 2;
+						const avgCenterDistance = (centerDistanceP1 + centerDistanceP2) / 2;
+						const dynamicMaxDistance = densityFalloff > 0
+							? maxLinkDistance * (1 + avgCenterDistance * densityFalloff * 0.5)
+							: maxLinkDistance;
+						const dynamicMaxDistanceSquared = dynamicMaxDistance * dynamicMaxDistance;
 
-				// Increase link distance for particles farther from center
-				const dynamicMaxDistance =
-					densityFalloff > 0
+						if (distSq < dynamicMaxDistanceSquared) {
+							const dist = Math.sqrt(distSq);
+							const alpha = 1.0 - dist / dynamicMaxDistance;
+
+							nearColor.set(linkColorNear);
+							farColor.set(linkColorFar);
+							tempColor.copy(nearColor).lerp(farColor, 1 - alpha);
+
+							// リンクデータを保存
+							linkStateMap.current.set(pairKey, {
+								positions: [tempVector1.x, tempVector1.y, tempVector1.z, tempVector2.x, tempVector2.y, tempVector2.z],
+								colors: [tempColor.r, tempColor.g, tempColor.b, tempColor.r, tempColor.g, tempColor.b],
+								valid: true
+							});
+						} else {
+							// 距離が遠い場合は無効にする
+							const existingLink = linkStateMap.current.get(pairKey);
+							if (existingLink) {
+								existingLink.valid = false;
+							}
+						}
+						
+						processedPairs++;
+					}
+					pairIndex++;
+				}
+			}
+
+			// 次のバッチインデックスを計算
+			const totalBatches = Math.ceil(totalPairs / batchSize);
+			pairBatchIndex.current = (pairBatchIndex.current + 1) % totalBatches;
+		} else {
+			// 非適応モード：全ペアを一度に処理
+			linkStateMap.current.clear();
+			
+			for (let i = 0; i < particleCount; i++) {
+				for (let j = i + 1; j < particleCount; j++) {
+					const i3 = i * 3;
+					const j3 = j * 3;
+					const pairKey = `${i}-${j}`;
+
+					tempVector1.set(positions[i3], positions[i3 + 1], positions[i3 + 2]);
+					tempVector2.set(positions[j3], positions[j3 + 1], positions[j3 + 2]);
+
+					const distSq = tempVector1.distanceToSquared(tempVector2);
+
+					const dx1 = tempVector1.x - centerPosition[0];
+					const dz1 = tempVector1.z - centerPosition[2];
+					const centerDistanceSqP1 = dx1 * dx1 + dz1 * dz1;
+					const centerDistanceP1 = Math.sqrt(centerDistanceSqP1) / spawnRange;
+					
+					const dx2 = tempVector2.x - centerPosition[0];
+					const dz2 = tempVector2.z - centerPosition[2];
+					const centerDistanceSqP2 = dx2 * dx2 + dz2 * dz2;
+					const centerDistanceP2 = Math.sqrt(centerDistanceSqP2) / spawnRange;
+
+					const avgCenterDistance = (centerDistanceP1 + centerDistanceP2) / 2;
+					const dynamicMaxDistance = densityFalloff > 0
 						? maxLinkDistance * (1 + avgCenterDistance * densityFalloff * 0.5)
 						: maxLinkDistance;
-				const dynamicMaxDistanceSquared =
-					dynamicMaxDistance * dynamicMaxDistance;
+					const dynamicMaxDistanceSquared = dynamicMaxDistance * dynamicMaxDistance;
 
-				if (distSq < dynamicMaxDistanceSquared) {
-					const dist = Math.sqrt(distSq);
-					const alpha = 1.0 - dist / dynamicMaxDistance;
+					if (distSq < dynamicMaxDistanceSquared) {
+						const dist = Math.sqrt(distSq);
+						const alpha = 1.0 - dist / dynamicMaxDistance;
 
-					linePositions[lineVertexIndex * 6] = p1.x;
-					linePositions[lineVertexIndex * 6 + 1] = p1.y;
-					linePositions[lineVertexIndex * 6 + 2] = p1.z;
-					linePositions[lineVertexIndex * 6 + 3] = p2.x;
-					linePositions[lineVertexIndex * 6 + 4] = p2.y;
-					linePositions[lineVertexIndex * 6 + 5] = p2.z;
+						nearColor.set(linkColorNear);
+						farColor.set(linkColorFar);
+						tempColor.copy(nearColor).lerp(farColor, 1 - alpha);
 
-					const nearColor = new THREE.Color(linkColorNear);
-					const farColor = new THREE.Color(linkColorFar);
-					const color = nearColor.clone().lerp(farColor, 1 - alpha);
-
-					// Keep colors bright by separating color and alpha
-					lineColors[lineVertexIndex * 6] = color.r;
-					lineColors[lineVertexIndex * 6 + 1] = color.g;
-					lineColors[lineVertexIndex * 6 + 2] = color.b;
-					lineColors[lineVertexIndex * 6 + 3] = color.r;
-					lineColors[lineVertexIndex * 6 + 4] = color.g;
-					lineColors[lineVertexIndex * 6 + 5] = color.b;
-
-					lineVertexIndex++;
+						linkStateMap.current.set(pairKey, {
+							positions: [tempVector1.x, tempVector1.y, tempVector1.z, tempVector2.x, tempVector2.y, tempVector2.z],
+							colors: [tempColor.r, tempColor.g, tempColor.b, tempColor.r, tempColor.g, tempColor.b],
+							valid: true
+						});
+					}
 				}
 			}
 		}
 
-		linesRef.current.geometry.setDrawRange(0, lineVertexIndex * 2);
-		linesRef.current.geometry.attributes.position.needsUpdate = true;
-		linesRef.current.geometry.attributes.color.needsUpdate = true;
+		// BufferAttributeの更新：有効なリンクのみを描画
+		let lineVertexIndex = 0;
+		for (const [_key, link] of linkStateMap.current) {
+			if (link.valid) {
+				const baseIndex = lineVertexIndex * 6;
+				linePositions[baseIndex] = link.positions[0];
+				linePositions[baseIndex + 1] = link.positions[1];
+				linePositions[baseIndex + 2] = link.positions[2];
+				linePositions[baseIndex + 3] = link.positions[3];
+				linePositions[baseIndex + 4] = link.positions[4];
+				linePositions[baseIndex + 5] = link.positions[5];
+
+				lineColors[baseIndex] = link.colors[0];
+				lineColors[baseIndex + 1] = link.colors[1];
+				lineColors[baseIndex + 2] = link.colors[2];
+				lineColors[baseIndex + 3] = link.colors[3];
+				lineColors[baseIndex + 4] = link.colors[4];
+				lineColors[baseIndex + 5] = link.colors[5];
+
+				lineVertexIndex++;
+			}
+		}
+
+		// Geometry更新
+		const lineGeometry = linesRef.current.geometry;
+		lineGeometry.setDrawRange(0, lineVertexIndex * 2);
+		lineGeometry.attributes.position.needsUpdate = true;
+		
+		if (lastLineCount.current !== lineVertexIndex) {
+			lineGeometry.attributes.color.needsUpdate = true;
+			lastLineCount.current = lineVertexIndex;
+		}
+		
+		// パーティクル位置の更新
 		particlesRef.current.geometry.attributes.position.needsUpdate = true;
 	});
 
