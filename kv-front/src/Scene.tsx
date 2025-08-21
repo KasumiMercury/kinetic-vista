@@ -6,7 +6,8 @@ import {
 } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useEffect, useRef, useState } from "react";
-import { WaveWireframeMesh } from "./components/WaveWireframeMesh";
+import { ParticleNetwork } from "./components/ParticleNetwork";
+// import { WaveWireframeMesh } from "./components/WaveWireframeMesh";
 import { AllModels, type ModelComponent } from "./model";
 import { getLocationFromEnvironment } from "./utils/geolocation";
 import {
@@ -90,19 +91,33 @@ export function Scene({ rotation, useCameraControls }: SceneProps) {
 				})}
 			</Suspense>
 
-			<WaveWireframeMesh
-				size={60}
-				segments={192}
-				waveSpeed={1}
-				waveAmplitude={0.04}
-				waveFrequency={0.8}
-				waveDecay={0.03}
-				noiseScale={0.15}
-				noiseAmplitude={0.08}
-				color="#00ccee"
-				position={[0, -0.15, 0]}
-				waveCount={4}
-				waveInterval={1}
+			{/*<WaveWireframeMesh*/}
+			{/*	size={60}*/}
+			{/*	segments={192}*/}
+			{/*	waveSpeed={1}*/}
+			{/*	waveAmplitude={0.01}*/}
+			{/*	waveFrequency={0.8}*/}
+			{/*	waveDecay={0.03}*/}
+			{/*	noiseScale={0.15}*/}
+			{/*	noiseAmplitude={0.04}*/}
+			{/*	color="#00ccee"*/}
+			{/*	position={[0, -0.2, 0]}*/}
+			{/*	waveCount={12}*/}
+			{/*	waveInterval={0.1}*/}
+			{/*/>*/}
+
+			<ParticleNetwork
+				particleCount={400}
+				centerPosition={[0, -0.2, 0]}
+				yRange={0.08}
+				spawnRange={10}
+				maxLinkDistance={0.4}
+				linkColorNear="#ffffff"
+				linkColorFar="#87ceeb"
+				particleColor="#ffffff"
+				particleSize={0.01}
+				velocityRange={0.01}
+                densityFalloff={3}
 			/>
 
 			<ambientLight intensity={10} />
