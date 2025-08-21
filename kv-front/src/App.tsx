@@ -6,7 +6,12 @@ import { Scene } from "./Scene.tsx";
 function App() {
 	const [rotation, setRotation] = useState(0); // 度数で管理 (0-360°)
 	const [useCameraControls, setUseCameraControls] = useState(true);
+	const [timeOverride, setTimeOverride] = useState<number | null>(null); // 時刻オーバーライド (0-23時間)
 	const sliderId = useId();
+	const timeId = useId();
+
+	// 現在時刻を取得
+	const currentHour = new Date().getHours();
 
 	return (
 		<div style={{ width: "100vw", height: "100vh" }}>
@@ -46,10 +51,40 @@ function App() {
 					onChange={(e) => setRotation(parseFloat(e.target.value))}
 					style={{ width: "200px" }}
 				/>
+				<br />
+				<br />
+				<label>
+					<input
+						type="checkbox"
+						checked={timeOverride !== null}
+						onChange={(e) => setTimeOverride(e.target.checked ? currentHour : null)}
+					/>
+					Override Time (Debug)
+				</label>
+				<br />
+				<label htmlFor={timeId}>
+					Time: {timeOverride !== null ? `${timeOverride}:00` : `${currentHour}:00 (Real-time)`}
+				</label>
+				<br />
+				<input
+					id={timeId}
+					type="range"
+					min={0}
+					max={23}
+					step={1}
+					value={timeOverride ?? currentHour}
+					disabled={timeOverride === null}
+					onChange={(e) => setTimeOverride(parseInt(e.target.value))}
+					style={{ width: "200px" }}
+				/>
 			</div>
 
 			<Canvas>
-				<Scene rotation={rotation} useCameraControls={useCameraControls} />
+				<Scene 
+					rotation={rotation} 
+					useCameraControls={useCameraControls}
+					timeOverride={timeOverride}
+				/>
 			</Canvas>
 		</div>
 	);

@@ -19,9 +19,11 @@ import {
 type SceneProps = {
 	rotation: number;
 	useCameraControls: boolean;
+	compassOffset?: number;
+	timeOverride?: number | null;
 };
 
-export function Scene({ rotation, useCameraControls }: SceneProps) {
+export function Scene({ rotation, useCameraControls, compassOffset = 0, timeOverride }: SceneProps) {
 	const { ACTION } = CameraControlsImpl;
 	const controlsRef = useRef<CameraControlsImpl>(null);
 	const { gl } = useThree();
@@ -38,9 +40,15 @@ export function Scene({ rotation, useCameraControls }: SceneProps) {
 		const initializeSkyParameters = () => {
 			try {
 				const coordinates = getLocationFromEnvironment();
-				const currentTime = new Date();
+				let currentTime = new Date();
+				
+				if (timeOverride !== null && timeOverride !== undefined) {
+					currentTime = new Date();
+					currentTime.setHours(timeOverride, 0, 0, 0);
+				}
+				
 				const solarPos = calculateSolarPosition(currentTime, coordinates);
-				const params = calculateSkyParameters(solarPos);
+				const params = calculateSkyParameters(solarPos, compassOffset);
 				setSkyParams(params);
 
 				gl.toneMappingExposure = params.exposure;
@@ -50,7 +58,7 @@ export function Scene({ rotation, useCameraControls }: SceneProps) {
 		};
 
 		initializeSkyParameters();
-	}, [gl]);
+	}, [gl, compassOffset, timeOverride]);
 
 	const convertCompassToTarget = (compassDegrees: number, radius: number) => {
 		const rotationRad = ((-compassDegrees + 90) * Math.PI) / 180;

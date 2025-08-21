@@ -71,11 +71,12 @@ export interface SkyParameters {
 
 export function solarPositionToThreeJS(
 	solarPosition: SolarPosition,
+	compassOffset = 180,
 ): [number, number, number] {
 	const { azimuth, elevation } = solarPosition;
 
 	const elevationRad = Math.max(0, (elevation * Math.PI) / 180);
-	const azimuthRad = ((azimuth - 180) * Math.PI) / 180;
+	const azimuthRad = ((azimuth + compassOffset) * Math.PI) / 180;
 
 	const distance = 1;
 
@@ -88,9 +89,10 @@ export function solarPositionToThreeJS(
 
 export function calculateSkyParameters(
 	solarPosition: SolarPosition,
+	compassOffset = 180,
 ): SkyParameters {
 	const { elevation } = solarPosition;
-	const sunPosition = solarPositionToThreeJS(solarPosition);
+	const sunPosition = solarPositionToThreeJS(solarPosition, compassOffset);
 
 	// Normalize elevation (-90 to 90 degrees to 0 to 1) - reserved for future use
 	// const _normalizedElevation = Math.max(0, (elevation + 90) / 180);
