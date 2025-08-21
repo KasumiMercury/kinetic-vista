@@ -57,7 +57,7 @@ function App() {
 					<input
 						type="checkbox"
 						checked={timeOverride !== null}
-						onChange={(e) => setTimeOverride(e.target.checked ? currentHour : null)}
+						onChange={(e) => setTimeOverride(e.target.checked ? 16 : null)}
 					/>
 					Override Time (Debug)
 				</label>

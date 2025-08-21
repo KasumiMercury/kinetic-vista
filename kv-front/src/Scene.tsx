@@ -1,154 +1,159 @@
 import {
-	CameraControls,
-	CameraControlsImpl,
-	OrbitControls,
-	Sky,
+  CameraControls,
+  CameraControlsImpl,
+  OrbitControls,
+  Sky,
 } from "@react-three/drei";
-import { useFrame, useThree } from "@react-three/fiber";
-import { Suspense, useEffect, useRef, useState } from "react";
-import { ParticleNetwork } from "./components/ParticleNetwork";
-// import { WaveWireframeMesh } from "./components/WaveWireframeMesh";
-import { AllModels, type ModelComponent } from "./model";
-import { getLocationFromEnvironment } from "./utils/geolocation";
+import {useFrame, useThree} from "@react-three/fiber";
+import {Perf} from "r3f-perf";
+import {Suspense, useEffect, useRef, useState} from "react";
+import {ParticleNetwork} from "./components/ParticleNetwork";
+// import {WaveWireframeMesh} from "./components/WaveWireframeMesh";
+import {AllModels, type ModelComponent} from "./model";
+import {getLocationFromEnvironment} from "./utils/geolocation";
 import {
-	calculateSkyParameters,
-	calculateSolarPosition,
-	type SkyParameters,
+  calculateSkyParameters,
+  calculateSolarPosition,
+  type SkyParameters,
 } from "./utils/solarPosition";
 
 type SceneProps = {
-	rotation: number;
-	useCameraControls: boolean;
-	compassOffset?: number;
-	timeOverride?: number | null;
+  rotation: number;
+  useCameraControls: boolean;
+  compassOffset?: number;
+  timeOverride?: number | null;
 };
 
-export function Scene({ rotation, useCameraControls, compassOffset = 0, timeOverride }: SceneProps) {
-	const { ACTION } = CameraControlsImpl;
-	const controlsRef = useRef<CameraControlsImpl>(null);
-	const { gl } = useThree();
-	const [skyParams, setSkyParams] = useState<SkyParameters>({
-		sunPosition: [0, 1, 0],
-		turbidity: 10,
-		rayleigh: 1,
-		mieCoefficient: 0.005,
-		mieDirectionalG: 0.7,
-		exposure: 1,
-	});
+export function Scene({rotation, useCameraControls, compassOffset = 0, timeOverride}: SceneProps) {
+  const {ACTION} = CameraControlsImpl;
+  const controlsRef = useRef<CameraControlsImpl>(null);
+  const {gl} = useThree();
+  const [skyParams, setSkyParams] = useState<SkyParameters>({
+    sunPosition: [0, 1, 0],
+    turbidity: 10,
+    rayleigh: 1,
+    mieCoefficient: 0.005,
+    mieDirectionalG: 0.7,
+    exposure: 1,
+  });
 
-	useEffect(() => {
-		const initializeSkyParameters = () => {
-			try {
-				const coordinates = getLocationFromEnvironment();
-				let currentTime = new Date();
-				
-				if (timeOverride !== null && timeOverride !== undefined) {
-					currentTime = new Date();
-					currentTime.setHours(timeOverride, 0, 0, 0);
-				}
-				
-				const solarPos = calculateSolarPosition(currentTime, coordinates);
-				const params = calculateSkyParameters(solarPos, compassOffset);
-				setSkyParams(params);
+  useEffect(() => {
+    const initializeSkyParameters = () => {
+      try {
+        const coordinates = getLocationFromEnvironment();
+        let currentTime = new Date();
 
-				gl.toneMappingExposure = params.exposure;
-			} catch (error) {
-				console.error("Failed to calculate sky parameters:", error);
-			}
-		};
+        if (timeOverride !== null && timeOverride !== undefined) {
+          currentTime = new Date();
+          currentTime.setHours(timeOverride, 0, 0, 0);
+        }
 
-		initializeSkyParameters();
-	}, [gl, compassOffset, timeOverride]);
+        const solarPos = calculateSolarPosition(currentTime, coordinates);
+        const params = calculateSkyParameters(solarPos, compassOffset);
+        setSkyParams(params);
 
-	const convertCompassToTarget = (compassDegrees: number, radius: number) => {
-		const rotationRad = ((-compassDegrees + 90) * Math.PI) / 180;
+        gl.toneMappingExposure = params.exposure;
+      } catch (error) {
+        console.error("Failed to calculate sky parameters:", error);
+      }
+    };
 
-		return {
-			x: Math.cos(rotationRad) * radius, // 東西方向
-			z: -Math.sin(rotationRad) * radius, // 南北方向
-		};
-	};
+    initializeSkyParameters();
+  }, [gl, compassOffset, timeOverride]);
 
-	useFrame(() => {
-		if (controlsRef.current && useCameraControls) {
-			controlsRef.current.setPosition(0, 0.1, 0);
+  const convertCompassToTarget = (compassDegrees: number, radius: number) => {
+    const rotationRad = ((-compassDegrees + 90) * Math.PI) / 180;
 
-			const targetRadius = 5;
-			const target = convertCompassToTarget(rotation, targetRadius);
+    return {
+      x: Math.cos(rotationRad) * radius, // 東西方向
+      z: -Math.sin(rotationRad) * radius, // 南北方向
+    };
+  };
 
-			controlsRef.current.setTarget(target.x, 0, target.z);
-		}
-	});
+  useFrame(() => {
+    if (controlsRef.current && useCameraControls) {
+      controlsRef.current.setPosition(0, 0.2, 0);
 
-	return (
-		<>
-			<fog attach="fog" args={["#87CEEB", 5, 50]} />
+      const targetRadius = 5;
+      const target = convertCompassToTarget(rotation, targetRadius);
 
-			<Sky
-				sunPosition={skyParams.sunPosition}
-				turbidity={skyParams.turbidity}
-				rayleigh={skyParams.rayleigh}
-				mieCoefficient={skyParams.mieCoefficient}
-				mieDirectionalG={skyParams.mieDirectionalG}
-			/>
+      controlsRef.current.setTarget(target.x, 0, target.z);
+    }
+  });
 
-			<Suspense fallback={null}>
-				{AllModels.map(({ path, component: ModelComponent }) => {
-					const Component = ModelComponent as ModelComponent;
-					return <Component key={path} />;
-				})}
-			</Suspense>
+  return (
+      <>
+        <Perf/>
 
-			{/*<WaveWireframeMesh*/}
-			{/*	size={60}*/}
-			{/*	segments={192}*/}
-			{/*	waveSpeed={1}*/}
-			{/*	waveAmplitude={0.01}*/}
-			{/*	waveFrequency={0.8}*/}
-			{/*	waveDecay={0.03}*/}
-			{/*	noiseScale={0.15}*/}
-			{/*	noiseAmplitude={0.04}*/}
-			{/*	color="#00ccee"*/}
-			{/*	position={[0, -0.2, 0]}*/}
-			{/*	waveCount={12}*/}
-			{/*	waveInterval={0.1}*/}
-			{/*/>*/}
+        <fog attach="fog" args={["#87CEEB", 15, 50]}/>
 
-			<ParticleNetwork
-				particleCount={400}
-				centerPosition={[0, -0.2, 0]}
-				yRange={0.08}
-				spawnRange={10}
-				maxLinkDistance={0.4}
-				linkColorNear="#ffffff"
-				linkColorFar="#87ceeb"
-				particleColor="#ffffff"
-				particleSize={0.01}
-				velocityRange={0.01}
-                densityFalloff={3}
-			/>
+        <Sky
+            sunPosition={skyParams.sunPosition}
+            turbidity={skyParams.turbidity}
+            rayleigh={skyParams.rayleigh}
+            mieCoefficient={skyParams.mieCoefficient}
+            mieDirectionalG={skyParams.mieDirectionalG}
+        />
 
-			<ambientLight intensity={10} />
+        <Suspense fallback={null}>
+          {AllModels.map(({path, component: ModelComponent}) => {
+            const Component = ModelComponent as ModelComponent;
+            return <Component key={path}/>;
+          })}
+        </Suspense>
 
-			{useCameraControls ? (
-				<CameraControls
-					ref={controlsRef}
-					makeDefault
-					mouseButtons={{
-						left: ACTION.NONE,
-						middle: ACTION.NONE,
-						right: ACTION.NONE,
-						wheel: ACTION.NONE,
-					}}
-					touches={{
-						one: ACTION.NONE,
-						two: ACTION.NONE,
-						three: ACTION.NONE,
-					}}
-				/>
-			) : (
-				<OrbitControls />
-			)}
-		</>
-	);
+        {/*<WaveWireframeMesh*/}
+        {/*    size={60}*/}
+        {/*    segments={192}*/}
+        {/*    waveSpeed={1}*/}
+        {/*    waveAmplitude={0.01}*/}
+        {/*    waveFrequency={0.8}*/}
+        {/*    waveDecay={0.03}*/}
+        {/*    noiseScale={0.15}*/}
+        {/*    noiseAmplitude={0.04}*/}
+        {/*    color="#00ccee"*/}
+        {/*    position={[0, -0.2, 0]}*/}
+        {/*    waveCount={12}*/}
+        {/*    waveInterval={0.1}*/}
+        {/*/>*/}
+
+        <ParticleNetwork
+            particleCount={1000}
+            centerPosition={[0, -0.15, 0]}
+            yRange={0.1}
+            spawnRange={20}
+            maxLinkDistance={0.35}
+            linkColor="#87ceeb"
+            particleColor="#ffffff"
+            particleSize={0.02}
+            velocityRange={0.003}
+            densityFalloff={5}
+            gridDivisions={9}
+            maxConnections={3}
+            connectionUpdateInterval={1}
+        />
+
+        <ambientLight intensity={10}/>
+
+        {useCameraControls ? (
+            <CameraControls
+                ref={controlsRef}
+                makeDefault
+                mouseButtons={{
+                  left: ACTION.NONE,
+                  middle: ACTION.NONE,
+                  right: ACTION.NONE,
+                  wheel: ACTION.NONE,
+                }}
+                touches={{
+                  one: ACTION.NONE,
+                  two: ACTION.NONE,
+                  three: ACTION.NONE,
+                }}
+            />
+        ) : (
+            <OrbitControls/>
+        )}
+      </>
+  );
 }
