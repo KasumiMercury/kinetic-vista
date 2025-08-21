@@ -1,17 +1,16 @@
 import { forwardRef } from 'react';
-import { DoubleSide } from 'three';
-import type { MeshStandardMaterialProps } from '@react-three/fiber';
+import * as THREE from 'three';
 
-interface DirectionalColorMaterialProps extends Omit<MeshStandardMaterialProps, 'color'> {
+interface DirectionalColorMaterialProps {
   transparent?: boolean;
   opacity?: number;
-  side?: typeof DoubleSide;
+  side?: THREE.Side;
 }
 
 export const DirectionalColorMaterial = forwardRef<
   THREE.MeshStandardMaterial,
   DirectionalColorMaterialProps
->(({ transparent = true, opacity = 0.5, side = DoubleSide, ...props }, ref) => {
+>(({ transparent = true, opacity = 0.5, side = THREE.DoubleSide, ...props }, ref) => {
   return (
     <meshStandardMaterial
       ref={ref}
@@ -20,12 +19,12 @@ export const DirectionalColorMaterial = forwardRef<
       side={side}
       {...props}
       onBeforeCompile={(shader) => {
-        // バーテックスシェーダーに法線情報を追加
         shader.vertexShader = shader.vertexShader.replace(
           '#include <common>',
           `
           #include <common>
           varying vec3 vWorldNormal;
+          varying vec3 vWorldPosition;
           `
         );
 
@@ -34,23 +33,29 @@ export const DirectionalColorMaterial = forwardRef<
           `
           #include <worldpos_vertex>
           vWorldNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
+          vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz;
           `
         );
 
-        // フラグメントシェーダーで法線ベクトルを色に変換
         shader.fragmentShader = shader.fragmentShader.replace(
           '#include <common>',
           `
           #include <common>
           varying vec3 vWorldNormal;
+          varying vec3 vWorldPosition;
           `
         );
 
         shader.fragmentShader = shader.fragmentShader.replace(
           'vec4 diffuseColor = vec4( diffuse, opacity );',
           `
-          // 法線ベクトルを0-1の範囲にマッピングして色に変換
-          vec3 directionalColor = normalize(vWorldNormal) * 0.5 + 0.5;
+          vec3 normalizedWorldNormal = normalize(vWorldNormal);
+          
+          if (vWorldPosition.y < -0.1 && normalizedWorldNormal.y < -0.1) {
+            discard;
+          }
+          
+          vec3 directionalColor = normalizedWorldNormal * 0.5 + 0.5;
           vec4 diffuseColor = vec4( directionalColor, opacity );
           `
         );
