@@ -93,16 +93,16 @@ export function Scene({ rotation, useCameraControls }: SceneProps) {
 			<WaveWireframeMesh
 				size={60}
 				segments={192}
-				waveSpeed={2.0}
+				waveSpeed={1}
 				waveAmplitude={0.04}
-				waveFrequency={0.6}
-				waveDecay={0.06}
+				waveFrequency={0.8}
+				waveDecay={0.03}
 				noiseScale={0.15}
 				noiseAmplitude={0.08}
 				color="#00ccee"
-				position={[0, -0.1, 0]}
-				waveCount={2}
-				waveInterval={1.5}
+				position={[0, -0.15, 0]}
+				waveCount={4}
+				waveInterval={1}
 			/>
 
 			<ambientLight intensity={10} />
