@@ -73,6 +73,8 @@ export function Scene({ rotation, useCameraControls }: SceneProps) {
 
 	return (
 		<>
+			<fog attach="fog" color="#87CEEB" near={5} far={50} />
+
 			<Sky
 				sunPosition={skyParams.sunPosition}
 				turbidity={skyParams.turbidity}
@@ -98,9 +100,9 @@ export function Scene({ rotation, useCameraControls }: SceneProps) {
 				noiseScale={0.15}
 				noiseAmplitude={0.08}
 				color="#00ccee"
-				position={[0, -0.3, 0]}
-				waveCount={4}
-				waveInterval={1.8}
+				position={[0, -0.1, 0]}
+				waveCount={2}
+				waveInterval={1.5}
 			/>
 
 			<ambientLight intensity={10} />
