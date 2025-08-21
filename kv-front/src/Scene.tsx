@@ -73,7 +73,7 @@ export function Scene({ rotation, useCameraControls }: SceneProps) {
 
 	return (
 		<>
-			<fog attach="fog" color="#87CEEB" near={5} far={50} />
+			<fog attach="fog" args={["#87CEEB", 5, 50]} />
 
 			<Sky
 				sunPosition={skyParams.sunPosition}
