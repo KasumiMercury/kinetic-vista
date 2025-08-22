@@ -138,23 +138,23 @@ export function Scene({rotation, useCameraControls, compassOffset = 0, timeOverr
             size={60}
             position={[0, -0.25, 0]}
             textureRepeat={[100, 100]}
-            bumpScale={20}
-	    color="#ffffff"
+            bumpScale={30}
+            color="#ffffff"
         />
 
         <directionalLight
           position={skyParams.sunPosition}
-          intensity={5}
+          intensity={6}
           castShadow
           shadow-mapSize-width={1024}
           shadow-mapSize-height={1024}
-          shadow-camera-far={50}
-          shadow-camera-left={-15}
-          shadow-camera-right={15}
-          shadow-camera-top={15}
-          shadow-camera-bottom={-15}
-          shadow-bias={-0.0001}
-          shadow-normalBias={0.02}
+          shadow-camera-far={30}
+          shadow-camera-left={-10}
+          shadow-camera-right={10}
+          shadow-camera-top={10}
+          shadow-camera-bottom={-10}
+          shadow-bias={-0.001}
+          shadow-normalBias={0.005}
         />
         <ambientLight intensity={5}/>
 

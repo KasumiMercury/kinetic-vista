@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { useLoader } from '@react-three/fiber'
-import { TextureLoader, RepeatWrapping } from 'three'
+import { TextureLoader, RepeatWrapping, PlaneGeometry, MeshStandardMaterial } from 'three'
 
 interface ResidentialPlaneProps {
   size?: number
@@ -11,7 +11,7 @@ interface ResidentialPlaneProps {
   color?: string
 }
 
-export function ResidentialPlane({
+const ResidentialPlane = React.memo(function ResidentialPlane({
   size = 50,
   position = [0, 0, 0],
   rotation = [-Math.PI / 2, 0, 0],
@@ -21,22 +21,33 @@ export function ResidentialPlane({
 }: ResidentialPlaneProps) {
   const bumpTexture = useLoader(TextureLoader, '/bump.png')
   
-  useMemo(() => {
-    bumpTexture.wrapS = RepeatWrapping
-    bumpTexture.wrapT = RepeatWrapping
-    bumpTexture.repeat.set(textureRepeat[0], textureRepeat[1])
+  // Memoize texture configuration to avoid unnecessary recalculations
+  const configuredTexture = useMemo(() => {
+    const texture = bumpTexture.clone()
+    texture.wrapS = RepeatWrapping
+    texture.wrapT = RepeatWrapping
+    texture.repeat.set(textureRepeat[0], textureRepeat[1])
+    return texture
   }, [bumpTexture, textureRepeat])
 
+  // Memoize geometry to reuse when size doesn't change
+  const geometry = useMemo(() => new PlaneGeometry(size, size), [size])
+  
+  // Memoize material to avoid recreation when props don't change
+  const material = useMemo(() => {
+    const mat = new MeshStandardMaterial({
+      color: color,
+      bumpMap: configuredTexture,
+      bumpScale: bumpScale,
+      roughness: 0.8,
+      metalness: 0.1
+    })
+    return mat
+  }, [color, configuredTexture, bumpScale])
+
   return (
-    <mesh position={position} rotation={rotation} receiveShadow>
-      <planeGeometry args={[size, size]} />
-      <meshStandardMaterial
-        color={color}
-        bumpMap={bumpTexture}
-        bumpScale={bumpScale}
-        roughness={0.8}
-        metalness={0.1}
-      />
-    </mesh>
+    <mesh position={position} rotation={rotation} receiveShadow geometry={geometry} material={material} />
   )
-}
+})
+
+export { ResidentialPlane }
