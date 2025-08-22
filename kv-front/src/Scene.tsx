@@ -8,6 +8,7 @@ import {useFrame, useThree} from "@react-three/fiber";
 import {Perf} from "r3f-perf";
 import {Suspense, useEffect, useRef, useState} from "react";
 import {ParticleNetwork} from "./components/ParticleNetwork";
+import {ResidentialPlane} from "./components/ResidentialPlane";
 // import {WaveWireframeMesh} from "./components/WaveWireframeMesh";
 import {AllModels, type ModelComponent} from "./model";
 import {getLocationFromEnvironment} from "./utils/geolocation";
@@ -133,7 +134,29 @@ export function Scene({rotation, useCameraControls, compassOffset = 0, timeOverr
             connectionUpdateInterval={1}
         />
 
-        <ambientLight intensity={10}/>
+        <ResidentialPlane
+            size={60}
+            position={[0, -0.25, 0]}
+            textureRepeat={[100, 100]}
+            bumpScale={20}
+	    color="#ffffff"
+        />
+
+        <directionalLight
+          position={skyParams.sunPosition}
+          intensity={5}
+          castShadow
+          shadow-mapSize-width={1024}
+          shadow-mapSize-height={1024}
+          shadow-camera-far={50}
+          shadow-camera-left={-15}
+          shadow-camera-right={15}
+          shadow-camera-top={15}
+          shadow-camera-bottom={-15}
+          shadow-bias={-0.0001}
+          shadow-normalBias={0.02}
+        />
+        <ambientLight intensity={5}/>
 
         {useCameraControls ? (
             <CameraControls

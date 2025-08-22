@@ -74,12 +74,12 @@ function App() {
 					step={1}
 					value={timeOverride ?? currentHour}
 					disabled={timeOverride === null}
-					onChange={(e) => setTimeOverride(parseInt(e.target.value))}
+					onChange={(e) => setTimeOverride(parseInt(e.target.value, 10))}
 					style={{ width: "200px" }}
 				/>
 			</div>
 
-			<Canvas>
+			<Canvas shadows>
 				<Scene 
 					rotation={rotation} 
 					useCameraControls={useCameraControls}

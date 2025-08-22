@@ -58,7 +58,7 @@ class Grid {
 		if (!this.cells.has(index)) {
 			this.cells.set(index, []);
 		}
-		this.cells.get(index)!.push(particleIndex);
+		this.cells.get(index)?.push(particleIndex);
 	}
 
 	getNearbyParticles(x: number, z: number): number[] {
