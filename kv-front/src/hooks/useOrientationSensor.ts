@@ -10,7 +10,6 @@ declare global {
   }
   
   interface DeviceOrientationEvent {
-    requestPermission?: () => Promise<'granted' | 'denied'>;
     webkitCompassHeading?: number;
   }
 }
@@ -54,7 +53,6 @@ const compassHeading = (alpha: number | null, beta: number | null, gamma: number
   const _y = gamma * degtorad;
   const _z = alpha * degtorad;
   
-  const _cX = Math.cos(_x);
   const cY = Math.cos(_y);
   const cZ = Math.cos(_z);
   const sX = Math.sin(_x);
@@ -132,7 +130,7 @@ export function useOrientationSensor(): [SensorInfo, () => Promise<void>] {
   const [sensorType, setSensorType] = useState<SensorType>('unsupported');
   const [isListening, setIsListening] = useState(false);
   
-  const sensorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const sensorTimeoutRef = useRef<number | null>(null);
   const listenerRef = useRef<((event: DeviceOrientationEvent) => void) | null>(null);
   const absoluteSensorRef = useRef<AbsoluteOrientationSensor | null>(null);
   const dataReceivedRef = useRef<boolean>(false);
@@ -210,7 +208,7 @@ export function useOrientationSensor(): [SensorInfo, () => Promise<void>] {
 
       console.log('[Init] Using DeviceOrientationEvent');
       setSensorType('device-orientation');
-      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
         console.log('[Init] DeviceOrientationEvent permission required');
         setPermissionState('needs-permission');
       } else {
@@ -332,7 +330,7 @@ export function useOrientationSensor(): [SensorInfo, () => Promise<void>] {
     }
     
     setSensorType('device-orientation');
-    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+    if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
       setPermissionState('needs-permission');
       console.log('[Fallback] DeviceOrientationEvent permission required');
     } else {
@@ -416,10 +414,10 @@ export function useOrientationSensor(): [SensorInfo, () => Promise<void>] {
   // DeviceOrientationEventの権限要求
   const requestDeviceOrientationPermission = async () => {
     console.log('[DeviceOrientationEvent] Requesting permission...');
-    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+    if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
       try {
         console.log('[DeviceOrientationEvent] Permission function available, requesting...');
-        const permission = await DeviceOrientationEvent.requestPermission?.();
+        const permission = await (DeviceOrientationEvent as any).requestPermission();
         console.log('[DeviceOrientationEvent] Permission result:', permission);
         if (permission === 'granted') {
           setPermissionState('granted');
