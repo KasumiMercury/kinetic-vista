@@ -55,11 +55,6 @@ interface SensorInfo {
   isListening: boolean;
 }
 
-const DEBUG = import.meta.env?.DEV || false;
-const log = DEBUG ? console.log : () => {
-};
-const logError = DEBUG ? console.error : () => {
-};
 
 const compassHeading = (
     alpha: number | null,
@@ -168,18 +163,11 @@ export function useOrientationSensor(): [SensorInfo, () => Promise<void>] {
     if (sensorTimeoutRef.current) {
       clearTimeout(sensorTimeoutRef.current);
       sensorTimeoutRef.current = null;
-      log("Timeout cleared - data received");
     }
   }, []);
 
   const createOrientationHandler = useCallback(() => {
     return (event: DeviceOrientationEvent) => {
-      log("DeviceOrientationEvent change:", {
-        alpha: event.alpha,
-        beta: event.beta,
-        gamma: event.gamma,
-        webkitCompassHeading: event.webkitCompassHeading,
-      });
 
       clearSensorTimeout();
 
@@ -197,25 +185,20 @@ export function useOrientationSensor(): [SensorInfo, () => Promise<void>] {
             event.webkitCompassHeading,
         );
         setCompassHeading(heading);
-        log("DeviceOrientation data updated - heading:", heading);
       }
     };
   }, [clearSensorTimeout]);
 
   const startDeviceOrientationListening = useCallback(() => {
-    log("[DeviceOrientationEvent] Starting listener...");
     dataReceivedRef.current = false;
 
     const handleOrientationChange = createOrientationHandler();
     listenerRef.current = handleOrientationChange;
     window.addEventListener("deviceorientation", handleOrientationChange);
     setIsListening(true);
-    log("[DeviceOrientationEvent] Event listener added, setting timeout...");
 
     sensorTimeoutRef.current = setTimeout(() => {
-      log("[DeviceOrientationEvent] Timeout reached. Data received:", dataReceivedRef.current);
       if (!dataReceivedRef.current) {
-        log("[DeviceOrientationEvent] No data received, marking as no-sensor");
         setPermissionState("no-sensor");
         if (listenerRef.current) {
           window.removeEventListener("deviceorientation", listenerRef.current);
@@ -226,12 +209,11 @@ export function useOrientationSensor(): [SensorInfo, () => Promise<void>] {
   }, [createOrientationHandler]);
 
   const fallbackToDeviceOrientation = useCallback(() => {
-    log("[Fallback] Switching to DeviceOrientationEvent");
     if (absoluteSensorRef.current) {
       try {
         absoluteSensorRef.current.stop();
       } catch (error) {
-        logError("[Fallback] Error stopping AbsoluteOrientationSensor:", error);
+        console.error("[Fallback] Error stopping AbsoluteOrientationSensor:", error);
       }
       absoluteSensorRef.current = null;
     }
@@ -241,16 +223,13 @@ export function useOrientationSensor(): [SensorInfo, () => Promise<void>] {
 
     if (typeof DeviceOrientationEventTyped.requestPermission === "function") {
       setPermissionState("needs-permission");
-      log("[Fallback] DeviceOrientationEvent permission required");
     } else {
       setPermissionState("granted");
       startDeviceOrientationListening();
-      log("[Fallback] DeviceOrientationEvent started directly");
     }
   }, [startDeviceOrientationListening]);
 
   const startAbsoluteOrientationSensorListening = useCallback(() => {
-    log("[AbsoluteOrientationSensor] Starting listener...");
     try {
       dataReceivedRef.current = false;
       if (!window.AbsoluteOrientationSensor) {
@@ -260,7 +239,6 @@ export function useOrientationSensor(): [SensorInfo, () => Promise<void>] {
       absoluteSensorRef.current = sensor;
 
       const handleReading = () => {
-        log("[AbsoluteOrientationSensor] Reading event received", sensor.quaternion);
         clearSensorTimeout();
 
         dataReceivedRef.current = true;
@@ -268,15 +246,13 @@ export function useOrientationSensor(): [SensorInfo, () => Promise<void>] {
           setQuaternion(sensor.quaternion);
           const heading = calculateCompassFromQuaternion(sensor.quaternion);
           setCompassHeading(heading);
-          log("[AbsoluteOrientationSensor] Data updated - quaternion:", sensor.quaternion, "heading:", heading);
         }
       };
 
       const handleError = (event: Event) => {
-        logError("[AbsoluteOrientationSensor] Sensor error:", event);
+        console.error("[AbsoluteOrientationSensor] Sensor error:", event);
         retryCountRef.current++;
         if (retryCountRef.current < 2) {
-          log("[AbsoluteOrientationSensor] Retrying with DeviceOrientationEvent...");
           fallbackToDeviceOrientation();
         } else {
           setPermissionState("no-sensor");
@@ -289,14 +265,12 @@ export function useOrientationSensor(): [SensorInfo, () => Promise<void>] {
       setIsListening(true);
 
       sensorTimeoutRef.current = setTimeout(() => {
-        log("[AbsoluteOrientationSensor] Timeout reached. Data received:", dataReceivedRef.current);
         if (!dataReceivedRef.current) {
-          log("[AbsoluteOrientationSensor] No data received, falling back to DeviceOrientationEvent");
           fallbackToDeviceOrientation();
         }
       }, 3000);
     } catch (error) {
-      logError("[AbsoluteOrientationSensor] Failed to create sensor:", error);
+      console.error("[AbsoluteOrientationSensor] Failed to create sensor:", error);
       fallbackToDeviceOrientation();
     }
   }, [clearSensorTimeout, fallbackToDeviceOrientation]);
@@ -304,31 +278,25 @@ export function useOrientationSensor(): [SensorInfo, () => Promise<void>] {
 
   useEffect(() => {
     const checkSupport = async () => {
-      log("[Init] Checking sensor support...");
 
       if (checkAbsoluteOrientationSensorSupport()) {
-        log("[Init] AbsoluteOrientationSensor supported");
         setSensorType("absolute-orientation");
         setPermissionState("needs-permission");
         return;
       }
 
       if (!window.DeviceOrientationEvent) {
-        log("[Init] DeviceOrientationEvent not supported");
         setSensorType("unsupported");
         setPermissionState("not-supported");
         return;
       }
 
-      log("[Init] Using DeviceOrientationEvent");
       setSensorType("device-orientation");
       const DeviceOrientationEventTyped = DeviceOrientationEvent as unknown as DeviceOrientationEventConstructor;
 
       if (typeof DeviceOrientationEventTyped.requestPermission === "function") {
-        log("[Init] DeviceOrientationEvent permission required");
         setPermissionState("needs-permission");
       } else {
-        log("[Init] DeviceOrientationEvent permission not required, starting directly");
         setPermissionState("granted");
         startDeviceOrientationListening();
       }
@@ -337,7 +305,6 @@ export function useOrientationSensor(): [SensorInfo, () => Promise<void>] {
     checkSupport();
 
     return () => {
-      log("[Cleanup] Component unmounting, cleaning up sensors...");
 
       if (listenerRef.current) {
         window.removeEventListener("deviceorientation", listenerRef.current);
@@ -348,7 +315,7 @@ export function useOrientationSensor(): [SensorInfo, () => Promise<void>] {
         try {
           absoluteSensorRef.current.stop();
         } catch (error) {
-          logError("[Cleanup] Error stopping AbsoluteOrientationSensor:", error);
+          console.error("[Cleanup] Error stopping AbsoluteOrientationSensor:", error);
         }
         absoluteSensorRef.current = null;
       }
@@ -365,42 +332,33 @@ export function useOrientationSensor(): [SensorInfo, () => Promise<void>] {
   }, [startDeviceOrientationListening]);
 
   const requestPermission = useCallback(async () => {
-    log("[Permission] Request started for sensor type:", sensorType);
     retryCountRef.current = 0;
 
     if (sensorType === "absolute-orientation") {
-      log("[AbsoluteOrientationSensor] Requesting permissions...");
       try {
-        log("[AbsoluteOrientationSensor] Attempting direct sensor creation...");
         setPermissionState("granted");
         startAbsoluteOrientationSensorListening();
       } catch (error) {
-        logError("[AbsoluteOrientationSensor] Permission request failed:", error);
-        log("[AbsoluteOrientationSensor] Falling back to DeviceOrientationEvent");
+        console.error("[AbsoluteOrientationSensor] Permission request failed:", error);
         fallbackToDeviceOrientation();
       }
     } else if (sensorType === "device-orientation") {
-      log("[DeviceOrientationEvent] Requesting permission...");
       const DeviceOrientationEventTyped = DeviceOrientationEvent as unknown as DeviceOrientationEventConstructor;
 
       if (typeof DeviceOrientationEventTyped.requestPermission === "function") {
         try {
-          log("[DeviceOrientationEvent] Permission function available, requesting...");
           const permission = await DeviceOrientationEventTyped.requestPermission();
-          log("[DeviceOrientationEvent] Permission result:", permission);
           if (permission === "granted") {
             setPermissionState("granted");
             startDeviceOrientationListening();
           } else {
-            log("[DeviceOrientationEvent] Permission denied");
             setPermissionState("denied");
           }
         } catch (error) {
-          logError("[DeviceOrientationEvent] Permission request error:", error);
+          console.error("[DeviceOrientationEvent] Permission request error:", error);
           setPermissionState("denied");
         }
       } else {
-        log("[DeviceOrientationEvent] No permission function, starting directly");
         setPermissionState("granted");
         startDeviceOrientationListening();
       }
