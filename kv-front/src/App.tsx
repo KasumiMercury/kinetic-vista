@@ -3,6 +3,7 @@ import { Canvas } from "@react-three/fiber";
 import { useId, useState, useEffect } from "react";
 import { Scene } from "./Scene.tsx";
 import { useOrientationSensor } from "./hooks/useOrientationSensor";
+import { useSmoothRotation } from "./hooks/useSmoothRotation";
 
 function App() {
 	const [rotation, setRotation] = useState(0); // 度数で管理 (0-360°)
@@ -24,6 +25,12 @@ function App() {
 			setRotation(sensorInfo.compassHeading);
 		}
 	}, [sensorInfo.compassHeading, useManualRotation, sensorInfo.permissionState]);
+
+	// 滑らかな補間を適用
+	const smoothRotation = useSmoothRotation(rotation, {
+		interpolationSpeed: 0.15, // 少し早めの補間速度
+		threshold: 0.05 // 小さな変化も検出
+	});
 
 	return (
 		<div style={{ width: "100vw", height: "100vh" }}>
@@ -60,7 +67,7 @@ function App() {
 				</label>
 				<br />
 				<label htmlFor={sliderId}>
-					Camera Rotation: {Math.round(rotation)}° {!useManualRotation && sensorInfo.compassHeading !== null ? "(Sensor)" : "(Manual)"}
+					Camera Rotation: {Math.round(smoothRotation)}° {!useManualRotation && sensorInfo.compassHeading !== null ? "(Sensor)" : "(Manual)"}
 				</label>
 				<br />
 				<input
@@ -261,7 +268,7 @@ function App() {
 
 			<Canvas shadows>
 				<Scene 
-					rotation={rotation} 
+					rotation={useManualRotation ? rotation : smoothRotation} 
 					useCameraControls={useCameraControls}
 					timeOverride={timeOverride}
 				/>
