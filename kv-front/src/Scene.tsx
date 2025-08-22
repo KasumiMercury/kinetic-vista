@@ -131,7 +131,7 @@ export function Scene({rotation, useCameraControls, compassOffset = 0, timeOverr
             densityFalloff={3}
             gridDivisions={9}
             maxConnections={3}
-            connectionUpdateInterval={1}
+            connectionUpdateInterval={10}
             timeScale={24}
         />
 
