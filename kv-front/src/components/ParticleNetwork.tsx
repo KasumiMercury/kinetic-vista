@@ -20,6 +20,7 @@ interface ParticleNetworkProps {
 	gridDivisions?: number; // Number of grid divisions (must be odd, default: 5)
 	maxConnections?: number; // Maximum connections per particle (default: 3)
 	connectionUpdateInterval?: number; // Frames between connection updates (default: 3)
+	timeScale?: number; // Time scale multiplier for consistent animation speed across devices (default: 60)
 }
 
 // Grid class for spatial partitioning optimization
@@ -103,6 +104,7 @@ export function ParticleNetwork({
 	gridDivisions = 5,
 	maxConnections = 3,
 	connectionUpdateInterval = 3,
+	timeScale = 60,
 }: ParticleNetworkProps) {
 	const particlesRef = useRef<THREE.Points>(null);
 	const linesRef = useRef<THREE.LineSegments>(null);
@@ -111,10 +113,15 @@ export function ParticleNetwork({
 	// Grid system for spatial optimization
 	const gridRef = useRef<Grid | null>(null);
 	const frameCounter = useRef(0);
+	const accumulatedTime = useRef(0);
 	const connectionCounts = useRef<number[]>([]);
+	const initialConnectionsCalculated = useRef(false);
 	
-	// Ensure odd grid divisions for center block
-	const actualGridDivisions = gridDivisions % 2 === 0 ? gridDivisions + 1 : gridDivisions;
+	const targetUpdateInterval = connectionUpdateInterval / 60;
+	
+	const actualGridDivisions = useMemo(() => gridDivisions % 2 === 0 ? gridDivisions + 1 : gridDivisions, [gridDivisions]);
+
+	const memoizedCenterPosition = useMemo(() => centerPosition, [centerPosition[0], centerPosition[1], centerPosition[2]]);
 
 	const { particlePositions, particleVelocities, linePositions } =
 		useMemo(() => {
@@ -133,9 +140,9 @@ export function ParticleNetwork({
 						densityFalloff > 0 ? (1 - distance) ** densityFalloff : 1;
 				} while (densityFalloff > 0 && Math.random() > probability);
 
-				positions[i3] = centerPosition[0] + x;
-				positions[i3 + 1] = centerPosition[1] + y;
-				positions[i3 + 2] = centerPosition[2] + z;
+				positions[i3] = memoizedCenterPosition[0] + x;
+				positions[i3 + 1] = memoizedCenterPosition[1] + y;
+				positions[i3 + 2] = memoizedCenterPosition[2] + z;
 
 				velocities[i3] = (Math.random() - 0.5) * velocityRange * 0.3;
 				velocities[i3 + 1] = (Math.random() - 0.5) * (velocityRange * 0.05);
@@ -152,17 +159,20 @@ export function ParticleNetwork({
 			const cellSize = Math.max(maxLinkDistance * 1.2, spawnRange / actualGridDivisions);
 			gridRef.current = new Grid(spawnRange * 2, cellSize);
 
+			initialConnectionsCalculated.current = false;
+
 			return {
 				particlePositions: positions,
 				particleVelocities: velocities,
 				linePositions: linePos,
 			};
-		}, [particleCount, centerPosition, yRange, spawnRange, velocityRange, densityFalloff, maxConnections, maxLinkDistance, actualGridDivisions]);
+		}, [particleCount, memoizedCenterPosition, yRange, spawnRange, velocityRange, densityFalloff, maxConnections, maxLinkDistance, actualGridDivisions]);
 
-	useFrame((_state, _delta) => {
+	useFrame((_state, delta) => {
 		if (!particlesRef.current || !linesRef.current || !gridRef.current) return;
 
 		frameCounter.current++;
+		accumulatedTime.current += delta;
 
 		const positions = particlesRef.current.geometry.attributes.position
 			.array as Float32Array;
@@ -171,20 +181,22 @@ export function ParticleNetwork({
 		const linePositions = linesRef.current.geometry.attributes.position
 			.array as Float32Array;
 
-		// Update particle positions (every frame)
 		const boxSizeX = spawnRange;
 		const boxSizeY = yRange;
 		const boxSizeZ = spawnRange;
 
 		for (let i = 0; i < particleCount; i++) {
 			const i3 = i * 3;
-			positions[i3] += velocities[i3];
-			positions[i3 + 1] += velocities[i3 + 1];
-			positions[i3 + 2] += velocities[i3 + 2];
 
-			const baseX = centerPosition[0];
-			const baseY = centerPosition[1];
-			const baseZ = centerPosition[2];
+			const deltaTimeScaled = delta * timeScale;
+			
+			positions[i3] += velocities[i3] * deltaTimeScaled;
+			positions[i3 + 1] += velocities[i3 + 1] * deltaTimeScaled;
+			positions[i3 + 2] += velocities[i3 + 2] * deltaTimeScaled;
+
+			const baseX = memoizedCenterPosition[0];
+			const baseY = memoizedCenterPosition[1];
+			const baseZ = memoizedCenterPosition[2];
 
 			if (
 				positions[i3] > baseX + boxSizeX ||
@@ -206,8 +218,14 @@ export function ParticleNetwork({
 			}
 		}
 
-		// Connection calculation with update interval control
-		if (frameCounter.current % connectionUpdateInterval === 0) {
+		const shouldUpdateConnections = !initialConnectionsCalculated.current || accumulatedTime.current >= targetUpdateInterval;
+		
+		if (shouldUpdateConnections) {
+			if (initialConnectionsCalculated.current) {
+				accumulatedTime.current = 0;
+			}
+			initialConnectionsCalculated.current = true;
+			
 			// Clear and rebuild grid
 			gridRef.current.clear();
 			
@@ -240,13 +258,13 @@ export function ParticleNetwork({
 					const distSq = tempVector1.distanceToSquared(tempVector2);
 
 					// Dynamic link distance calculation
-					const dx1 = tempVector1.x - centerPosition[0];
-					const dz1 = tempVector1.z - centerPosition[2];
+					const dx1 = tempVector1.x - memoizedCenterPosition[0];
+					const dz1 = tempVector1.z - memoizedCenterPosition[2];
 					const centerDistanceSqP1 = dx1 * dx1 + dz1 * dz1;
 					const centerDistanceP1 = Math.sqrt(centerDistanceSqP1) / spawnRange;
 					
-					const dx2 = tempVector2.x - centerPosition[0];
-					const dz2 = tempVector2.z - centerPosition[2];
+					const dx2 = tempVector2.x - memoizedCenterPosition[0];
+					const dz2 = tempVector2.z - memoizedCenterPosition[2];
 					const centerDistanceSqP2 = dx2 * dx2 + dz2 * dz2;
 					const centerDistanceP2 = Math.sqrt(centerDistanceSqP2) / spawnRange;
 

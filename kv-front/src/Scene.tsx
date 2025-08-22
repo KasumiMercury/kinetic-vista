@@ -5,7 +5,7 @@ import {
   Sky,
 } from "@react-three/drei";
 import {useFrame, useThree} from "@react-three/fiber";
-import {Perf} from "r3f-perf";
+// import {Perf} from "r3f-perf";
 import {Suspense, useEffect, useRef, useState} from "react";
 import {ParticleNetwork} from "./components/ParticleNetwork";
 import {ResidentialPlane} from "./components/ResidentialPlane";
@@ -84,7 +84,7 @@ export function Scene({rotation, useCameraControls, compassOffset = 0, timeOverr
 
   return (
       <>
-        <Perf/>
+        {/*<Perf/>*/}
 
         <fog attach="fog" args={["#87CEEB", 5, 40]}/>
 
@@ -132,6 +132,7 @@ export function Scene({rotation, useCameraControls, compassOffset = 0, timeOverr
             gridDivisions={9}
             maxConnections={3}
             connectionUpdateInterval={1}
+            timeScale={24}
         />
 
         <ResidentialPlane
