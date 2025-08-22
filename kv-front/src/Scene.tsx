@@ -86,7 +86,7 @@ export function Scene({rotation, useCameraControls, compassOffset = 0, timeOverr
       <>
         <Perf/>
 
-        <fog attach="fog" args={["#87CEEB", 15, 50]}/>
+        <fog attach="fog" args={["#87CEEB", 5, 40]}/>
 
         <Sky
             sunPosition={skyParams.sunPosition}
@@ -119,16 +119,16 @@ export function Scene({rotation, useCameraControls, compassOffset = 0, timeOverr
         {/*/>*/}
 
         <ParticleNetwork
-            particleCount={1000}
-            centerPosition={[0, -0.15, 0]}
-            yRange={0.1}
+            particleCount={1500}
+            centerPosition={[0, -0.1, 0]}
+            yRange={0.15}
             spawnRange={20}
             maxLinkDistance={0.35}
             linkColor="#87ceeb"
             particleColor="#ffffff"
             particleSize={0.02}
-            velocityRange={0.003}
-            densityFalloff={5}
+            velocityRange={0.005}
+            densityFalloff={3}
             gridDivisions={9}
             maxConnections={3}
             connectionUpdateInterval={1}
