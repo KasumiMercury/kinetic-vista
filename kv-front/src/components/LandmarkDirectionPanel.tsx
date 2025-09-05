@@ -72,7 +72,9 @@ export function LandmarkDirectionPanel({
 							left: `${landmark.positionPercent}%`,
 							width: `${landmark.isSelected ? MARKER_SIZE_SELECTED : MARKER_SIZE_NORMAL}px`,
 							height: `${landmark.isSelected ? MARKER_SIZE_SELECTED : MARKER_SIZE_NORMAL}px`,
-							backgroundColor: landmark.isSelected ? MARKER_COLOR : "transparent",
+							backgroundColor: landmark.isSelected
+								? MARKER_COLOR
+								: "transparent",
 							cursor: "pointer",
 						}}
 						title={`${landmark.displayJP} (${Math.round(landmark.relativeAngle)}°)`}

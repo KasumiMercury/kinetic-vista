@@ -10,7 +10,9 @@ export function PermissionDeniedOverlay({
 	return (
 		<div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/80">
 			<div className="max-w-[400px] rounded-xl bg-white p-8 text-center text-black shadow-xl">
-				<h2 className="mt-0 text-xl font-semibold text-red-600">Permission Denied</h2>
+				<h2 className="mt-0 text-xl font-semibold text-red-600">
+					Permission Denied
+				</h2>
 				<p className="mt-2">
 					Motion sensor access was denied. You can still use manual rotation
 					controls.

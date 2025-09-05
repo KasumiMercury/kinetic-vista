@@ -7,9 +7,7 @@ interface SensorStatusPanelProps {
 export function SensorStatusPanel({ sensorInfo }: SensorStatusPanelProps) {
 	return (
 		<div className="absolute bottom-5 right-5 z-[100] min-w-[200px] rounded-md bg-black/70 p-3 text-[12px] text-white">
-			<div className="mb-1.5 font-bold">
-				Sensor Status
-			</div>
+			<div className="mb-1.5 font-bold">Sensor Status</div>
 			<div>
 				API:{" "}
 				{sensorInfo.sensorType === "absolute-orientation"
@@ -26,7 +24,8 @@ export function SensorStatusPanel({ sensorInfo }: SensorStatusPanelProps) {
 					: "N/A"}
 			</div>
 			<div>Listening: {sensorInfo.isListening ? "Yes" : "No"}</div>
-			{sensorInfo.sensorType === "absolute-orientation" && sensorInfo.quaternion && (
+			{sensorInfo.sensorType === "absolute-orientation" &&
+				sensorInfo.quaternion && (
 					<div className="mt-1.5">
 						<div>Quaternion:</div>
 						<div>X: {sensorInfo.quaternion[0].toFixed(3)}</div>

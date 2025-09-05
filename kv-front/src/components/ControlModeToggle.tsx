@@ -24,9 +24,13 @@ export function ControlModeToggle({
 		const base = "ml-2 rounded px-1.5 py-0.5 text-[12px] leading-none";
 		switch (permissionState) {
 			case "granted":
-				return <span className={`${base} bg-green-700 text-white`}>許可済み</span>;
+				return (
+					<span className={`${base} bg-green-700 text-white`}>許可済み</span>
+				);
 			case "needs-permission":
-				return <span className={`${base} bg-amber-500 text-black`}>要許可</span>;
+				return (
+					<span className={`${base} bg-amber-500 text-black`}>要許可</span>
+				);
 			case "denied":
 				return <span className={`${base} bg-red-600 text-white`}>拒否</span>;
 			case "no-sensor":
