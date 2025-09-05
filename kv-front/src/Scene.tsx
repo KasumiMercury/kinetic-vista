@@ -12,7 +12,7 @@ import { ResidentialPlane } from "./components/ResidentialPlane";
 // import {WaveWireframeMesh} from "./components/WaveWireframeMesh";
 import { AllModels, type ModelComponent } from "./model";
 import { getLocationFromEnvironment } from "./utils/geolocation";
-import { CylinderMarkers } from "./components/CylinderMarkers";
+import { OctahedronMarkers } from "./components/OctahedronMarkers";
 import {
 	calculateSkyParameters,
 	calculateSolarPosition,
@@ -111,11 +111,10 @@ export function Scene({
 				})}
 			</Suspense>
 
-			<CylinderMarkers
-				radius={0.2}
+			<OctahedronMarkers
 				color="#ff3366"
 				coordMap={{ xKey: "x", zKey: "y", invertZ: true }}
-				height={10}
+				height={0.1}
 				selectedKeys={selectedLandmarks}
 			/>
 

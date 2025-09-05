@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import { CylinderMarker } from "./CylinderMarker";
+import { OctahedronMarker } from "./OctahedronMarker";
 import loc from "../assets/landmark.json";
 
 type ScaleLike =
@@ -17,13 +17,11 @@ type CoordMap = {
 	invertZ?: boolean;
 };
 
-type CylinderMarkersProps = Omit<
+type OctahedronMarkersProps = Omit<
 	JSX.IntrinsicElements["group"],
 	"scale" | "rotation"
 > & {
-	// Global marker appearance
-	radius?: number;
-	height?: number;
+	// Global appearance
 	color?: string;
 	scale?: ScaleLike;
 	yaw?: number;
@@ -31,26 +29,33 @@ type CylinderMarkersProps = Omit<
 	coordMap?: CoordMap;
 	// Keys of landmarks to render. If omitted, renders all.
 	selectedKeys?: string[];
+	// Base display height (lowest vertex will be at this height)
+	height?: number;
 };
 
-type LocEntry = { x?: number; y?: number; z?: number; displayJP?: string };
+type LocEntry = {
+	x?: number;
+	y?: number;
+	z?: number;
+	radius?: number;
+	heightOffset?: number;
+	displayJP?: string;
+};
 type LocData = Record<string, LocEntry>;
 
-const DEFAULT_RADIUS = 0.12;
-const DEFAULT_HEIGHT = 3.0;
 const DEFAULT_COLOR = "#ff3366";
+const DEFAULT_RADIUS = 0.12; // used only if landmark radius is missing
 
-export function CylinderMarkers({
-	radius = DEFAULT_RADIUS,
-	height = DEFAULT_HEIGHT,
+export function OctahedronMarkers({
 	color = DEFAULT_COLOR,
 	scale,
 	rotation,
 	yaw,
 	coordMap,
 	selectedKeys,
+	height = 0,
 	...groupProps
-}: CylinderMarkersProps): JSX.Element {
+}: OctahedronMarkersProps): JSX.Element {
 	const data = loc as unknown as LocData;
 
 	const { sx, sz } = (() => {
@@ -90,7 +95,7 @@ export function CylinderMarkers({
 			).map(([key, entry]) => {
 				const baseX = (xKey ? (entry as never)[xKey] : entry.x) ?? 0;
 				const baseZ =
-					(zKey ? (entry as never)[zKey] : (entry.z ?? entry.y)) ?? 0; // prefer z; fallback to y for Blender
+					(zKey ? (entry as never)[zKey] : (entry.z ?? entry.y)) ?? 0; // prefer z; fallback to y
 
 				const vx = (invertX ? -baseX : baseX) * sx;
 				const vz = (invertZ ? -baseZ : baseZ) * sz;
@@ -98,13 +103,17 @@ export function CylinderMarkers({
 				const rx = vx * cosY + vz * sinY;
 				const rz = -vx * sinY + vz * cosY;
 
+				const r = entry.radius ?? DEFAULT_RADIUS;
+				// Position Y so the lowest vertex sits at `height + heightOffset`
+				const centerY = height + (entry.heightOffset ?? 0) + r;
+
 				return (
-					<CylinderMarker
+					<OctahedronMarker
 						key={key}
 						x={rx}
+						y={centerY}
 						z={rz}
-						radius={radius}
-						height={height}
+						radius={r}
 						color={color}
 					/>
 				);
