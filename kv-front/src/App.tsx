@@ -138,6 +138,7 @@ function App() {
 			<LandmarkDirectionPanel
 				cameraRotation={useManualRotation ? rotation : smoothRotation}
 				selectedLandmarks={selectedLandmarks}
+				coordMap={{ xKey: "x", zKey: "y", invertZ: true }}
 			/>
 
 			{/* Landmark 選択パネル（左下・最前面） */}
