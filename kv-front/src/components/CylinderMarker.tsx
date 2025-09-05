@@ -16,7 +16,7 @@ export function CylinderMarker({
 	color,
 }: CylinderMarkerProps): JSX.Element {
 	return (
-		<mesh position={[x, height / 2, z]} castShadow receiveShadow>
+		<mesh position={[x, height / 2 - 0.3, z]} castShadow receiveShadow>
 			<cylinderGeometry args={[radius, radius, height, 32]} />
 			<meshStandardMaterial
 				color={color}

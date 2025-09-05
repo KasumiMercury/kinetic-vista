@@ -113,6 +113,7 @@ export function Scene({
 				radius={0.2}
 				color="#ff3366"
 				coordMap={{ xKey: "x", zKey: "y", invertZ: true }}
+                height={10}
 			/>
 
 			{/*<WaveWireframeMesh*/}
