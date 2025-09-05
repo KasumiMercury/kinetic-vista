@@ -1,14 +1,25 @@
 import "./App.css";
 import { Canvas } from "@react-three/fiber";
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Scene } from "./Scene.tsx";
 import { useOrientationSensor } from "./hooks/useOrientationSensor";
 import { useSmoothRotation } from "./hooks/useSmoothRotation";
 import { LandmarkPanel } from "./components/LandmarkPanel";
-import { CameraControlsPanel } from "./components/CameraControlsPanel";
-import { SensorStatusPanel } from "./components/SensorStatusPanel";
 import { PermissionRequestOverlay } from "./components/PermissionRequestOverlay";
 import { PermissionDeniedOverlay } from "./components/PermissionDeniedOverlay";
+import { useDebug } from "./hooks/useDebug";
+
+// Lazy-load debug-only panels so they are not bundled unless needed
+const CameraControlsPanel = lazy(() =>
+  import("./components/CameraControlsPanel").then((m) => ({
+    default: m.CameraControlsPanel,
+  })),
+);
+const SensorStatusPanel = lazy(() =>
+  import("./components/SensorStatusPanel").then((m) => ({
+    default: m.SensorStatusPanel,
+  })),
+);
 
 function App() {
 	const [rotation, setRotation] = useState(0); // 度数で管理 (0-360°)
@@ -16,6 +27,9 @@ function App() {
 	const [timeOverride, setTimeOverride] = useState<number | null>(null); // 時刻オーバーライド (0-23時間)
 	const [useManualRotation, setUseManualRotation] = useState(false); // 手動制御モード
 	const [selectedLandmarks, setSelectedLandmarks] = useState<string[]>([]); // 複数選択
+
+	// Debug flag (enabled via ?debug, #debug, or localStorage)
+	const debug = useDebug();
 
 	// 現在時刻を取得
 	const currentHour = new Date().getHours();
@@ -46,21 +60,30 @@ function App() {
 
 	return (
 		<div style={{ width: "100vw", height: "100vh" }}>
-			<CameraControlsPanel
-				useCameraControls={useCameraControls}
-				onUseCameraControlsChange={setUseCameraControls}
-				useManualRotation={useManualRotation}
-				onUseManualRotationChange={setUseManualRotation}
-				rotation={rotation}
-				onRotationChange={setRotation}
-				smoothRotation={smoothRotation}
-				timeOverride={timeOverride}
-				onTimeOverrideChange={setTimeOverride}
-				currentHour={currentHour}
-				isSensorActive={!useManualRotation && sensorInfo.compassHeading !== null}
-			/>
 
-			<SensorStatusPanel sensorInfo={sensorInfo} />
+			{debug && (
+				<Suspense>
+					<CameraControlsPanel
+						useCameraControls={useCameraControls}
+						onUseCameraControlsChange={setUseCameraControls}
+						useManualRotation={useManualRotation}
+						onUseManualRotationChange={setUseManualRotation}
+						rotation={rotation}
+						onRotationChange={setRotation}
+						smoothRotation={smoothRotation}
+						timeOverride={timeOverride}
+						onTimeOverrideChange={setTimeOverride}
+						currentHour={currentHour}
+						isSensorActive={!useManualRotation && sensorInfo.compassHeading !== null}
+					/>
+				</Suspense>
+			)}
+
+			{debug && (
+				<Suspense>
+					<SensorStatusPanel sensorInfo={sensorInfo} />
+				</Suspense>
+			)}
 
 			{/* 権限取得ボタン（画面中央・最前面） */}
 			{sensorInfo.permissionState === "needs-permission" && (
