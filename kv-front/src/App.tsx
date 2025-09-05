@@ -7,7 +7,7 @@ import { LandmarkPanel } from "./components/LandmarkPanel";
 import { PermissionRequestOverlay } from "./components/PermissionRequestOverlay";
 import { PermissionDeniedOverlay } from "./components/PermissionDeniedOverlay";
 import { useDebug } from "./hooks/useDebug";
-import { ControlModeToggle } from "./components/ControlModeToggle";
+import { OptionPanel } from "./components/OptionPanel";
 import { LandmarkDirectionPanel } from "./components/LandmarkDirectionPanel";
 
 // Lazy-load debug-only panels so they are not bundled unless needed
@@ -96,8 +96,8 @@ function App() {
 				</Suspense>
 			)}
 
-			{/* 操作モード切替（画面右上・最前面） */}
-			<ControlModeToggle
+			{/* オプション設定パネル（画面右下・最前面） */}
+			<OptionPanel
 				mode={useCameraControls ? "sensor" : "drag"}
 				permissionState={sensorInfo.permissionState}
 				onChange={async (mode) => {

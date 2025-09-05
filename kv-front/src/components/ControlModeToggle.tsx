@@ -21,7 +21,7 @@ export function ControlModeToggle({
 
 	const permissionBadge = useMemo(() => {
 		if (!isSensor || !permissionState) return null;
-		const base = "ml-2 rounded px-1.5 py-0.5 text-[12px] leading-none";
+		const base = "mt-2 rounded px-1.5 py-0.5 text-[12px] leading-none";
 		switch (permissionState) {
 			case "granted":
 				return (
@@ -42,13 +42,13 @@ export function ControlModeToggle({
 	}, [isSensor, permissionState]);
 
 	return (
-		<div className="fixed right-3 top-3 z-[1101] flex items-center gap-2 rounded-lg bg-black/60 px-2 py-2 text-white shadow-lg backdrop-blur">
-			<span className="text-[13px]">操作モード</span>
-			<div className="flex gap-1.5">
+		<div className="space-y-3">
+			<div className="text-[13px] text-white/80">操作モード</div>
+			<div className="space-y-2">
 				<button
 					type="button"
 					onClick={() => onChange("drag")}
-					className={`cursor-pointer rounded-md border px-2.5 py-1.5 text-[13px] ${
+					className={`w-full cursor-pointer rounded-md border px-3 py-2 text-[13px] ${
 						mode === "drag"
 							? "border-blue-500 bg-blue-600 text-white"
 							: "border-white/30 bg-transparent text-white"
@@ -59,7 +59,7 @@ export function ControlModeToggle({
 				<button
 					type="button"
 					onClick={() => onChange("sensor")}
-					className={`cursor-pointer rounded-md border px-2.5 py-1.5 text-[13px] ${
+					className={`w-full cursor-pointer rounded-md border px-3 py-2 text-[13px] ${
 						mode === "sensor"
 							? "border-blue-500 bg-blue-600 text-white"
 							: "border-white/30 bg-transparent text-white"
