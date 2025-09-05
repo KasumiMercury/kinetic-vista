@@ -6,21 +6,8 @@ interface SensorStatusPanelProps {
 
 export function SensorStatusPanel({ sensorInfo }: SensorStatusPanelProps) {
 	return (
-		<div
-			style={{
-				position: "absolute",
-				bottom: "20px",
-				right: "20px",
-				zIndex: 100,
-				color: "white",
-				background: "rgba(0, 0, 0, 0.7)",
-				padding: "10px",
-				borderRadius: "5px",
-				fontSize: "12px",
-				minWidth: "200px",
-			}}
-		>
-			<div style={{ fontWeight: "bold", marginBottom: "5px" }}>
+		<div className="absolute bottom-5 right-5 z-[100] min-w-[200px] rounded-md bg-black/70 p-3 text-[12px] text-white">
+			<div className="mb-1.5 font-bold">
 				Sensor Status
 			</div>
 			<div>
@@ -39,9 +26,8 @@ export function SensorStatusPanel({ sensorInfo }: SensorStatusPanelProps) {
 					: "N/A"}
 			</div>
 			<div>Listening: {sensorInfo.isListening ? "Yes" : "No"}</div>
-			{sensorInfo.sensorType === "absolute-orientation" &&
-				sensorInfo.quaternion && (
-					<div style={{ marginTop: "5px" }}>
+			{sensorInfo.sensorType === "absolute-orientation" && sensorInfo.quaternion && (
+					<div className="mt-1.5">
 						<div>Quaternion:</div>
 						<div>X: {sensorInfo.quaternion[0].toFixed(3)}</div>
 						<div>Y: {sensorInfo.quaternion[1].toFixed(3)}</div>
@@ -50,7 +36,7 @@ export function SensorStatusPanel({ sensorInfo }: SensorStatusPanelProps) {
 					</div>
 				)}
 			{sensorInfo.sensorType === "device-orientation" && (
-				<div style={{ marginTop: "5px" }}>
+				<div className="mt-1.5">
 					<div>Orientation:</div>
 					<div>
 						α:{" "}

@@ -8,50 +8,18 @@ export function PermissionRequestOverlay({
 	onRequestPermission,
 }: PermissionRequestOverlayProps) {
 	return (
-		<div
-			style={{
-				position: "fixed",
-				top: 0,
-				left: 0,
-				width: "100vw",
-				height: "100vh",
-				backgroundColor: "rgba(0, 0, 0, 0.8)",
-				zIndex: 1000,
-				display: "flex",
-				alignItems: "center",
-				justifyContent: "center",
-			}}
-		>
-			<div
-				style={{
-					background: "white",
-					padding: "30px",
-					borderRadius: "10px",
-					textAlign: "center",
-					color: "black",
-					maxWidth: "400px",
-				}}
-			>
-				<h2 style={{ marginTop: 0 }}>Enable Orientation Sensing</h2>
-				<p>
+		<div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/80">
+			<div className="max-w-[400px] rounded-xl bg-white p-8 text-center text-black shadow-xl">
+				<h2 className="mt-0 text-xl font-semibold">Enable Orientation Sensing</h2>
+				<p className="mt-2 text-sm text-gray-700">
 					This app uses device orientation to control the camera direction.
 					Please grant permission to access motion sensors.
 				</p>
-				<p style={{ fontSize: "14px", color: "#666" }}>
-					Sensor Type: {sensorTypeLabel}
-				</p>
+				<p className="mt-3 text-[14px] text-gray-500">Sensor Type: {sensorTypeLabel}</p>
 				<button
 					type="button"
 					onClick={onRequestPermission}
-					style={{
-						padding: "12px 24px",
-						backgroundColor: "#007bff",
-						color: "white",
-						border: "none",
-						borderRadius: "5px",
-						fontSize: "16px",
-						cursor: "pointer",
-					}}
+					className="mt-5 inline-flex cursor-pointer items-center rounded-md bg-blue-600 px-6 py-3 text-[16px] font-medium text-white hover:bg-blue-700"
 				>
 					Enable Sensors
 				</button>

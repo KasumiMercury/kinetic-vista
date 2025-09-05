@@ -31,18 +31,7 @@ export function CameraControlsPanel({
 	const timeId = useId();
 
 	return (
-		<div
-			style={{
-				position: "absolute",
-				top: "20px",
-				left: "20px",
-				zIndex: 100,
-				color: "white",
-				background: "rgba(0, 0, 0, 0.5)",
-				padding: "10px",
-				borderRadius: "5px",
-			}}
-		>
+		<div className="absolute left-5 top-5 z-[100] rounded-md bg-black/50 p-3 text-white">
 			<label>
 				<input
 					type="checkbox"
@@ -76,7 +65,7 @@ export function CameraControlsPanel({
 				value={rotation}
 				disabled={!useManualRotation}
 				onChange={(e) => onRotationChange(parseFloat(e.target.value))}
-				style={{ width: "200px", opacity: useManualRotation ? 1 : 0.5 }}
+				className={`w-[200px] ${useManualRotation ? "opacity-100" : "opacity-50"}`}
 			/>
 			<br />
 			<br />
@@ -105,7 +94,7 @@ export function CameraControlsPanel({
 				value={timeOverride ?? currentHour}
 				disabled={timeOverride === null}
 				onChange={(e) => onTimeOverrideChange(parseInt(e.target.value, 10))}
-				style={{ width: "200px" }}
+				className="w-[200px]"
 			/>
 		</div>
 	);

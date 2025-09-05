@@ -33,25 +33,10 @@ export function LandmarkPanel({
 	};
 
 	return (
-		<div
-			style={{
-				position: "fixed",
-				left: 16,
-				bottom: 16,
-				zIndex: 10000,
-				maxWidth: "50vw",
-				maxHeight: "50vh",
-				overflow: "auto",
-				background: "rgba(0,0,0,0.7)",
-				color: "white",
-				padding: 12,
-				borderRadius: 8,
-				boxShadow: "0 2px 10px rgba(0,0,0,0.4)",
-			}}
-		>
-			<div style={{ fontWeight: 600, marginBottom: 8 }}>Landmarks</div>
+		<div className="fixed bottom-4 left-4 z-[10000] max-h-[50vh] max-w-[50vw] overflow-auto rounded-lg bg-black/70 p-3 text-white shadow-xl">
+			<div className="mb-2 font-semibold">Landmarks</div>
 
-			<div style={{ display: "grid", gap: 8 }}>
+			<div className="grid gap-2">
 				{items.map(({ key, displayJP }) => {
 					const selected = selectedKeys.includes(key);
 					return (
@@ -60,20 +45,11 @@ export function LandmarkPanel({
 							type="button"
 							onClick={() => toggle(key)}
 							aria-pressed={selected}
-							style={{
-								cursor: "pointer",
-								width: "100%",
-								textAlign: "left",
-								padding: "8px 10px",
-								borderRadius: 8,
-								border: selected
-									? "1px solid #ff8fb3"
-									: "1px solid rgba(255,255,255,0.25)",
-								background: selected ? "#ff3366" : "rgba(255,255,255,0.08)",
-								color: "white",
-								fontSize: 13,
-								lineHeight: 1.2,
-							}}
+							className={`w-full cursor-pointer rounded-lg px-2.5 py-2 text-left text-[13px] leading-[1.2] text-white ${
+								selected
+									? "border border-pink-300 bg-pink-600"
+									: "border border-white/25 bg-white/10"
+							}`}
 						>
 							{displayJP}
 						</button>

@@ -21,97 +21,45 @@ export function ControlModeToggle({
 
 	const permissionBadge = useMemo(() => {
 		if (!isSensor || !permissionState) return null;
-		const styleBase = {
-			marginLeft: 8,
-			padding: "2px 6px",
-			borderRadius: 4,
-			fontSize: 12,
-			lineHeight: 1,
-		} as const;
-
+		const base = "ml-2 rounded px-1.5 py-0.5 text-[12px] leading-none";
 		switch (permissionState) {
 			case "granted":
-				return (
-					<span style={{ ...styleBase, background: "#1e7e34", color: "white" }}>
-						許可済み
-					</span>
-				);
+				return <span className={`${base} bg-green-700 text-white`}>許可済み</span>;
 			case "needs-permission":
-				return (
-					<span style={{ ...styleBase, background: "#ffc107", color: "black" }}>
-						要許可
-					</span>
-				);
+				return <span className={`${base} bg-amber-500 text-black`}>要許可</span>;
 			case "denied":
-				return (
-					<span style={{ ...styleBase, background: "#dc3545", color: "white" }}>
-						拒否
-					</span>
-				);
+				return <span className={`${base} bg-red-600 text-white`}>拒否</span>;
 			case "no-sensor":
 			case "not-supported":
-				return (
-					<span style={{ ...styleBase, background: "#6c757d", color: "white" }}>
-						未対応
-					</span>
-				);
-			// case "checking":
+				return <span className={`${base} bg-gray-500 text-white`}>未対応</span>;
 			default:
-				return (
-					<span style={{ ...styleBase, background: "#17a2b8", color: "white" }}>
-						確認中
-					</span>
-				);
+				return <span className={`${base} bg-cyan-600 text-white`}>確認中</span>;
 		}
 	}, [isSensor, permissionState]);
 
 	return (
-		<div
-			style={{
-				position: "fixed",
-				top: 12,
-				right: 12,
-				zIndex: 1101,
-				background: "rgba(0,0,0,0.6)",
-				color: "white",
-				padding: 8,
-				borderRadius: 8,
-				display: "flex",
-				alignItems: "center",
-				gap: 8,
-				boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-				backdropFilter: "blur(6px)",
-			}}
-		>
-			<span style={{ fontSize: 13 }}>操作モード</span>
-			<div style={{ display: "flex", gap: 6 }}>
+		<div className="fixed right-3 top-3 z-[1101] flex items-center gap-2 rounded-lg bg-black/60 px-2 py-2 text-white shadow-lg backdrop-blur">
+			<span className="text-[13px]">操作モード</span>
+			<div className="flex gap-1.5">
 				<button
 					type="button"
 					onClick={() => onChange("drag")}
-					style={{
-						padding: "6px 10px",
-						borderRadius: 6,
-						border: "1px solid rgba(255,255,255,0.3)",
-						background: mode === "drag" ? "#0d6efd" : "transparent",
-						color: mode === "drag" ? "white" : "white",
-						cursor: "pointer",
-						fontSize: 13,
-					}}
+					className={`cursor-pointer rounded-md border px-2.5 py-1.5 text-[13px] ${
+						mode === "drag"
+							? "border-blue-500 bg-blue-600 text-white"
+							: "border-white/30 bg-transparent text-white"
+					}`}
 				>
 					ドラッグ
 				</button>
 				<button
 					type="button"
 					onClick={() => onChange("sensor")}
-					style={{
-						padding: "6px 10px",
-						borderRadius: 6,
-						border: "1px solid rgba(255,255,255,0.3)",
-						background: mode === "sensor" ? "#0d6efd" : "transparent",
-						color: mode === "sensor" ? "white" : "white",
-						cursor: "pointer",
-						fontSize: 13,
-					}}
+					className={`cursor-pointer rounded-md border px-2.5 py-1.5 text-[13px] ${
+						mode === "sensor"
+							? "border-blue-500 bg-blue-600 text-white"
+							: "border-white/30 bg-transparent text-white"
+					}`}
 				>
 					センサー
 				</button>

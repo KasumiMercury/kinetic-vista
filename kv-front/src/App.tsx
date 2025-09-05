@@ -1,4 +1,3 @@
-import "./App.css";
 import { Canvas } from "@react-three/fiber";
 import { useState, useEffect, lazy, Suspense } from "react";
 import { Scene } from "./Scene.tsx";
@@ -70,7 +69,7 @@ function App() {
 	});
 
 	return (
-		<div style={{ width: "100vw", height: "100vh" }}>
+		<div className="relative w-screen h-screen">
 			{debug && (
 				<Suspense>
 					<CameraControlsPanel
