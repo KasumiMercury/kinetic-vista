@@ -8,12 +8,20 @@ export type SelectionEvent =
   | { type: "selection"; userId: string; landmarkKey: string; color: string }
   | { type: "deselection"; userId: string; landmarkKey: string; color?: string };
 
+export type WelcomeEvent = { type: "welcome"; userId: string; color: string };
+
 type SelectionHandler = (e: SelectionEvent) => void;
 const selectionHandlers: Set<SelectionHandler> = new Set();
+const welcomeHandlers: Set<(e: WelcomeEvent) => void> = new Set();
 
 export function subscribeSelection(handler: SelectionHandler): () => void {
   selectionHandlers.add(handler);
   return () => selectionHandlers.delete(handler);
+}
+
+export function subscribeWelcome(handler: (e: WelcomeEvent) => void): () => void {
+  welcomeHandlers.add(handler);
+  return () => welcomeHandlers.delete(handler);
 }
 
 let state: ConnectionState = "idle"; // persists for page lifetime (module scope)
@@ -64,6 +72,12 @@ export function connectOnce(identity: UserIdentity): void {
     ws.onmessage = (ev) => {
       try {
         const data = JSON.parse(ev.data as string);
+        if (data && data.type === "welcome" && data.userId && data.color) {
+          const evt: WelcomeEvent = { type: "welcome", userId: String(data.userId), color: String(data.color) };
+          console.info("[ws] welcome:", evt);
+          welcomeHandlers.forEach((h) => { try { h(evt); } catch {} });
+          return;
+        }
         if (data && data.landmarkKey && data.userId && (data.type === "selection" || data.type === "deselection")) {
           if (data.type === "selection") {
             const evt: SelectionEvent = {

@@ -10,7 +10,7 @@ import { useDebug } from "./hooks/useDebug";
 import { OptionPanel } from "./components/OptionPanel";
 import { LandmarkDirectionPanel } from "./components/LandmarkDirectionPanel";
 import { getOrCreateUserIdentity } from "./utils/userIdentity";
-import { connectOnce, sendSelection, sendDeselection, subscribeSelection } from "./utils/wsClient";
+import { connectOnce, sendSelection, sendDeselection, subscribeSelection, subscribeWelcome } from "./utils/wsClient";
 
 // Lazy-load debug-only panels so they are not bundled unless needed
 const CameraControlsPanel = lazy(() =>
@@ -30,7 +30,8 @@ function App() {
 	const [timeOverride, setTimeOverride] = useState<number | null>(null); // 時刻オーバーライド (0-23時間)
 	const [useManualRotation, setUseManualRotation] = useState(false); // 手動制御モード
     const [selectedLandmarks, setSelectedLandmarks] = useState<string[]>([]); // 複数選択
-    const [{ userId, color }] = useState(() => getOrCreateUserIdentity());
+    const [identity, setIdentity] = useState(() => getOrCreateUserIdentity());
+    const { userId, color } = identity;
     const [remoteSelections, setRemoteSelections] = useState<Record<string, { userId: string; color: string; ts: number }>>({});
 
 	// Debug flag (enabled via ?debug, #debug, or localStorage)
@@ -85,6 +86,14 @@ function App() {
             console.warn("[ws] connect attempt failed:", e);
         }
     }, [userId, color]);
+
+    // Adopt server-assigned identity to ensure color matches across clients
+    useEffect(() => {
+        const unsub = subscribeWelcome((evt) => {
+            setIdentity({ userId: evt.userId, color: evt.color });
+        });
+        return () => unsub();
+    }, []);
 
     // Subscribe to selection broadcasts from other users
     useEffect(() => {

@@ -11,8 +11,8 @@ type OctahedronMarkerProps = {
 };
 
 export const OctahedronMarker = forwardRef(function OctahedronMarker(
-	{ x, y, z, radius, color }: OctahedronMarkerProps,
-	ref: Ref<Mesh>,
+    { x, y, z, radius, color }: OctahedronMarkerProps,
+    ref: Ref<Mesh>,
 ): JSX.Element {
 	return (
 		<mesh ref={ref} position={[x, y, z]} castShadow receiveShadow>
