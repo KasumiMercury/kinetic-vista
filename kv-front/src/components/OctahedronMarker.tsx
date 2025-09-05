@@ -1,4 +1,6 @@
-import type { JSX } from "react";
+import type { JSX, Ref } from "react";
+import { forwardRef } from "react";
+import type { Mesh } from "three";
 
 type OctahedronMarkerProps = {
 	x: number;
@@ -8,22 +10,19 @@ type OctahedronMarkerProps = {
 	color: string;
 };
 
-export function OctahedronMarker({
-	x,
-	y,
-	z,
-	radius,
-	color,
-}: OctahedronMarkerProps): JSX.Element {
+export const OctahedronMarker = forwardRef(function OctahedronMarker(
+	{ x, y, z, radius, color }: OctahedronMarkerProps,
+	ref: Ref<Mesh>,
+): JSX.Element {
 	return (
-		<mesh position={[x, y, z]} castShadow receiveShadow>
+		<mesh ref={ref} position={[x, y, z]} castShadow receiveShadow>
 			<octahedronGeometry args={[radius, 0]} />
 			<meshStandardMaterial
 				color={color}
-				// transparent
+				transparent={false}
 				opacity={1}
 				depthWrite={true}
 			/>
 		</mesh>
 	);
-}
+});

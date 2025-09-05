@@ -1,4 +1,7 @@
 import type { JSX } from "react";
+import { useRef } from "react";
+import { useFrame } from "@react-three/fiber";
+import type { Mesh } from "three";
 import { OctahedronMarker } from "./OctahedronMarker";
 import loc from "../assets/landmark.json";
 
@@ -31,6 +34,8 @@ type OctahedronMarkersProps = Omit<
 	selectedKeys?: string[];
 	// Base display height (lowest vertex will be at this height)
 	height?: number;
+	// Y-axis rotation speed in radians per second (applied to each marker)
+	spinSpeed?: number;
 };
 
 type LocEntry = {
@@ -54,9 +59,14 @@ export function OctahedronMarkers({
 	coordMap,
 	selectedKeys,
 	height = 0,
+	spinSpeed = 0,
 	...groupProps
 }: OctahedronMarkersProps): JSX.Element {
 	const data = loc as unknown as LocData;
+
+	// Refs for per-marker meshes to rotate efficiently without re-rendering
+	const meshRefs = useRef<Mesh[]>([]);
+	const angleRef = useRef(0);
 
 	const { sx, sz } = (() => {
 		if (typeof scale === "number") return { sx: scale, sz: scale };
@@ -87,12 +97,24 @@ export function OctahedronMarkers({
 	const invertX = coordMap?.invertX ?? false;
 	const invertZ = coordMap?.invertZ ?? false;
 
+	// Update rotation angle and apply to all marker meshes
+	useFrame((_state, delta) => {
+		if (meshRefs.current.length === 0 || spinSpeed === 0) return;
+		angleRef.current += delta * spinSpeed;
+		const angle = angleRef.current;
+		const normalized = angle % (Math.PI * 2);
+		for (let i = 0; i < meshRefs.current.length; i++) {
+			const m = meshRefs.current[i];
+			if (m) m.rotation.y = normalized;
+		}
+	});
+
 	return (
 		<group {...groupProps}>
 			{(selectedKeys !== undefined
 				? Object.entries(data).filter(([key]) => selectedKeys.includes(key))
 				: Object.entries(data)
-			).map(([key, entry]) => {
+			).map(([key, entry], i) => {
 				const baseX = (xKey ? (entry as never)[xKey] : entry.x) ?? 0;
 				const baseZ =
 					(zKey ? (entry as never)[zKey] : (entry.z ?? entry.y)) ?? 0; // prefer z; fallback to y
@@ -115,6 +137,9 @@ export function OctahedronMarkers({
 						z={rz}
 						radius={r}
 						color={color}
+						ref={(el) => {
+							if (el) meshRefs.current[i] = el;
+						}}
 					/>
 				);
 			})}

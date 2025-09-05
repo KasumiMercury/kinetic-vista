@@ -88,7 +88,10 @@ export function Scene({
 
 			controlsRef.current.setTarget(target.x, 0, target.z);
 		}
-	});
+		});
+
+	// Marker spin speed (radians per second). Adjust here centrally.
+	const markerSpinSpeed = 0.6;
 
 	return (
 		<>
@@ -111,12 +114,13 @@ export function Scene({
 				})}
 			</Suspense>
 
-			<OctahedronMarkers
-				color="#ff3366"
-				coordMap={{ xKey: "x", zKey: "y", invertZ: true }}
-				height={0.1}
-				selectedKeys={selectedLandmarks}
-			/>
+				<OctahedronMarkers
+					color="#ff3366"
+					coordMap={{ xKey: "x", zKey: "y", invertZ: true }}
+					height={0.1}
+					spinSpeed={markerSpinSpeed}
+					selectedKeys={selectedLandmarks}
+				/>
 
 			{/*<WaveWireframeMesh*/}
 			{/*    size={60}*/}
