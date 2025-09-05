@@ -47,7 +47,7 @@ export function connectOnce(identity: UserIdentity): void {
         color: identity.color,
       };
       try { ws?.send(JSON.stringify(hello)); } catch {}
-      console.info("[ws] connected:", url);
+      console.info("[ws] connected:", url, `userId=${identity.userId} color=${identity.color}`);
     };
     ws.onmessage = (ev) => {
       // Future: handle broadcast selections from others
@@ -82,4 +82,3 @@ export function sendSelection(userId: string, landmarkId: string): void {
 export function connectionState(): ConnectionState {
   return state;
 }
-

@@ -71,6 +71,11 @@ function App() {
         threshold: 0.05, // 小さな変化も検出
     });
 
+    // Log user identity (UUID + color)
+    useEffect(() => {
+        console.info(`[kv-front] userId=${userId} color=${color}`);
+    }, [userId, color]);
+
     // One-shot WebSocket connection attempt
     useEffect(() => {
         try {

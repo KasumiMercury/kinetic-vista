@@ -5,9 +5,6 @@ export type UserIdentity = {
   color: string; // hex like #AABBCC
 };
 
-const KEY_ID = "kv.userId";
-const KEY_COLOR = "kv.userColor";
-
 function generateUUID(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
@@ -22,25 +19,11 @@ function generateUUID(): string {
   return `${hex[0]}${hex[1]}${hex[2]}${hex[3]}-${hex[4]}${hex[5]}-${hex[6]}${hex[7]}-${hex[8]}${hex[9]}-${hex[10]}${hex[11]}${hex[12]}${hex[13]}${hex[14]}${hex[15]}`;
 }
 
+// Always generate a fresh identity for this page view (no persistence)
 export function getOrCreateUserIdentity(): UserIdentity {
-  try {
-    const storedId = localStorage.getItem(KEY_ID);
-    const storedColor = localStorage.getItem(KEY_COLOR);
-    if (storedId && storedColor) {
-      return { userId: storedId, color: storedColor };
-    }
-  } catch {}
-
   const userId = generateUUID();
-  // Use a deterministic seed from UUID to keep color stable per user
+  // Use a deterministic seed from UUID so color pairs with id for this session
   const seed = Array.from(userId).reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
   const color = generateVibrantHexColor(seed);
-
-  try {
-    localStorage.setItem(KEY_ID, userId);
-    localStorage.setItem(KEY_COLOR, color);
-  } catch {}
-
   return { userId, color };
 }
-
