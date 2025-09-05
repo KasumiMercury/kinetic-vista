@@ -309,6 +309,7 @@ func wsHandler(h *Hub) gin.HandlerFunc {
 		// Assign identity and color
 		uid := uuid.NewString()
 		color := randomHexColor()
+		infof("new connection assigned uid=%s color=%s", uid, color)
 		client := &Client{
 			id:    uid,
 			color: color,
@@ -366,7 +367,21 @@ func wsHandler(h *Hub) gin.HandlerFunc {
 		go writer(client)
 		reader(h, client)
 
-		// On exit of reader: cleanup
+		// On exit of reader: broadcast deselection if any, then cleanup
+		// Fetch current selection before deletion
+		lk, _ := rc.HGet(ctx, key, "landmarkKey").Result()
+		if strings.TrimSpace(lk) != "" {
+			out := SelectionBroadcast{
+				Type:        "deselection",
+				UserID:      client.id,
+				LandmarkKey: lk,
+				Color:       client.color,
+			}
+			if payload, err := json.Marshal(out); err == nil {
+				h.broadcast <- broadcastItem{sender: client, payload: payload}
+			}
+		}
+
 		h.unregister <- client
 		_ = conn.Close()
 		if err := rc.SRem(ctx, "kv:active_users", uid).Err(); err != nil {
@@ -420,6 +435,7 @@ func reader(h *Hub, c *Client) {
 			}).Err(); err != nil {
 				warnf("redis HSet selection error: %v", err)
 			}
+			debugf("selection uid=%s color=%s key=%s", c.id, c.color, lk)
 			out := SelectionBroadcast{
 				Type:        "selection",
 				UserID:      c.id, // enforce server-assigned id
@@ -444,6 +460,7 @@ func reader(h *Hub, c *Client) {
 			}).Err(); err != nil {
 				warnf("redis HSet lastUpdated error: %v", err)
 			}
+			debugf("deselection uid=%s key=%s", c.id, lk)
 			out := SelectionBroadcast{
 				Type:        "deselection",
 				UserID:      c.id,
