@@ -5,6 +5,7 @@ import { hexToRgba, lightenHex } from "../utils/userColor";
 type LandmarkDirectionPanelProps = {
     cameraRotation: number;
     selectedLandmarks: string[];
+    mySelectedKeys?: string[];
     coordMap?: CoordMap;
     scale?: { sx: number; sz: number };
     yawRad?: number;
@@ -21,6 +22,7 @@ const VIEW_ANGLE_RANGE = 90; // 左右90度ずつ（計180度）の範囲を表�
 export function LandmarkDirectionPanel({
     cameraRotation,
     selectedLandmarks,
+    mySelectedKeys = [],
     coordMap = {},
     scale = { sx: 1, sz: 1 },
     yawRad = 0,
@@ -109,9 +111,13 @@ export function LandmarkDirectionPanel({
                 )}
 
 				{/* Landmarkマーカー */}
-                {visibleLandmarks.map((landmark) => (
+                {visibleLandmarks.map((landmark) => {
+                    const key = landmark.key;
+                    const isMine = mySelectedKeys.includes(key);
+                    const c = colorsByKey?.[key] ?? markerColor;
+                    return (
                     <div
-                        key={landmark.key}
+                        key={key}
                         className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full ${
                             landmark.isSelected
                                 ? "border-2"
@@ -121,22 +127,22 @@ export function LandmarkDirectionPanel({
                             left: `${landmark.positionPercent}%`,
                             width: `${landmark.isSelected ? MARKER_SIZE_SELECTED : MARKER_SIZE_NORMAL}px`,
                             height: `${landmark.isSelected ? MARKER_SIZE_SELECTED : MARKER_SIZE_NORMAL}px`,
-                            backgroundColor: landmark.isSelected ? (colorsByKey?.[landmark.key] ?? markerColor) : "transparent",
-                            borderColor: landmark.isSelected ? (colorsByKey?.[landmark.key] ?? markerColor) : "black",
-                            boxShadow: landmark.isSelected ? `0 0 8px ${hexToRgba(colorsByKey?.[landmark.key] ?? markerColor, 0.45)}` : undefined,
+                            backgroundColor: landmark.isSelected ? (isMine ? c : "transparent") : "transparent",
+                            borderColor: landmark.isSelected ? c : "black",
+                            boxShadow: landmark.isSelected ? `0 0 8px ${hexToRgba(c, 0.45)}` : undefined,
                         }}
                         title={`${landmark.displayJP} (${Math.round(landmark.relativeAngle)}°)`}
                     >
-						{/* 選択中landmarkまたは最も近いlandmarkの名前表示 */}
-						{(landmark.isSelected || 
-						  (nearestLandmark && landmark.key === nearestLandmark.key)) && (
-							<div className="absolute left-1/2 top-full -translate-x-1/2 whitespace-nowrap text-base font-medium text-neutral-800 [text-shadow:0_1px_2px_rgba(255,255,255,0.8)]">
-								{landmark.displayJP}
-							</div>
-						)}
-					</div>
-				))}
-			</div>
-		</div>
-	);
+                        {/* 選択中landmarkまたは最も近いlandmarkの名前表示 */}
+                        {(landmark.isSelected || 
+                          (nearestLandmark && landmark.key === nearestLandmark.key)) && (
+                            <div className="absolute left-1/2 top-full -translate-x-1/2 whitespace-nowrap text-base font-medium text-neutral-800 [text-shadow:0_1px_2px_rgba(255,255,255,0.8)]">
+                                {landmark.displayJP}
+                            </div>
+                        )}
+                    </div>
+                )})}
+            </div>
+        </div>
+    );
 }

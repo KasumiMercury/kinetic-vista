@@ -213,6 +213,7 @@ function App() {
             <LandmarkDirectionPanel
                 cameraRotation={useManualRotation ? rotation : smoothRotation}
                 selectedLandmarks={displaySelectedKeys}
+                mySelectedKeys={selectedLandmarks}
                 color={color}
                 colorsByKey={colorsByKey}
                 coordMap={{ xKey: "x", zKey: "y", invertZ: true }}

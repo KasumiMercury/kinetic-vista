@@ -76,7 +76,7 @@ export function LandmarkPanel({
                                     selected
                                         ? { backgroundColor: bg, borderColor: border, boxShadow: `0 0 8px ${shadow}` }
                                         : remote
-                                            ? { backgroundColor: remote, borderColor: remote, boxShadow: `0 0 6px ${hexToRgba(remote, 0.35)}` }
+                                            ? { backgroundColor: "transparent", borderColor: remote, boxShadow: `0 0 6px ${hexToRgba(remote, 0.35)}` }
                                             : undefined
                                 }
                             >
