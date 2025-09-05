@@ -62,6 +62,21 @@ export function LandmarkDirectionPanel({
 		}, null as typeof visibleLandmarks[0] | null);
 	}, [visibleLandmarks, selectedLandmarks]);
 
+	// 表示範囲外の選択中landmarkを検出
+	const outOfRangeLandmarks = useMemo(() => {
+		return landmarkAngles.filter(
+			(landmark) => landmark.isSelected && Math.abs(landmark.relativeAngle) > VIEW_ANGLE_RANGE
+		);
+	}, [landmarkAngles]);
+
+	// 左端・右端インジケーター表示判定
+	const showLeftIndicator = outOfRangeLandmarks.some(
+		(landmark) => landmark.relativeAngle < -VIEW_ANGLE_RANGE
+	);
+	const showRightIndicator = outOfRangeLandmarks.some(
+		(landmark) => landmark.relativeAngle > VIEW_ANGLE_RANGE
+	);
+
 	return (
 		<div className="fixed left-1/2 top-0 z-50 w-full max-w-[800px] -translate-x-1/2 px-4">
 			<div
@@ -70,6 +85,22 @@ export function LandmarkDirectionPanel({
 			>
 				{/* カメラ方向の中央線 */}
 				<div className="absolute left-1/2 top-0 h-full w-[2px] -translate-x-1/2 bg-neutral-800" />
+
+				{/* 左端方向インジケーター */}
+				{showLeftIndicator && (
+					<div 
+						className="absolute left-0 top-0 h-full w-1 rounded-bl-lg shadow-[0_0_8px_rgba(255,51,102,0.5)]"
+						style={{ backgroundColor: MARKER_COLOR }}
+					/>
+				)}
+
+				{/* 右端方向インジケーター */}
+				{showRightIndicator && (
+					<div 
+						className="absolute right-0 top-0 h-full w-1 rounded-br-lg shadow-[0_0_8px_rgba(255,51,102,0.5)]"
+						style={{ backgroundColor: MARKER_COLOR }}
+					/>
+				)}
 
 				{/* Landmarkマーカー */}
 				{visibleLandmarks.map((landmark) => (
@@ -84,10 +115,10 @@ export function LandmarkDirectionPanel({
 							left: `${landmark.positionPercent}%`,
 							width: `${landmark.isSelected ? MARKER_SIZE_SELECTED : MARKER_SIZE_NORMAL}px`,
 							height: `${landmark.isSelected ? MARKER_SIZE_SELECTED : MARKER_SIZE_NORMAL}px`,
-							backgroundColor: landmark.isSelected
-								? MARKER_COLOR
-								: "transparent",
-							cursor: "pointer",
+							// backgroundColor: landmark.isSelected
+							// 	? MARKER_COLOR
+							// 	: "transparent",
+							// cursor: "pointer",
 						}}
 						title={`${landmark.displayJP} (${Math.round(landmark.relativeAngle)}°)`}
 					>
