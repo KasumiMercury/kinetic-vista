@@ -16,25 +16,25 @@ import {
 } from "./utils/solarPosition";
 
 type SceneProps = {
-    rotation: number;
-    useCameraControls: boolean; // true: sensor mode, false: drag mode
-    onRotationChange?: (value: number) => void;
-    compassOffset?: number;
-    timeOverride?: number | null;
-    selectedLandmarks?: string[];
-    markerColor?: string;
-    colorsByKey?: Record<string, string>;
+	rotation: number;
+	useCameraControls: boolean; // true: sensor mode, false: drag mode
+	onRotationChange?: (value: number) => void;
+	compassOffset?: number;
+	timeOverride?: number | null;
+	selectedLandmarks?: string[];
+	markerColor?: string;
+	colorsByKey?: Record<string, string>;
 };
 
 export function Scene({
-    rotation,
-    useCameraControls,
-    onRotationChange,
-    compassOffset = 0,
-    timeOverride,
-    selectedLandmarks,
-    markerColor,
-    colorsByKey,
+	rotation,
+	useCameraControls,
+	onRotationChange,
+	compassOffset = 0,
+	timeOverride,
+	selectedLandmarks,
+	markerColor,
+	colorsByKey,
 }: SceneProps) {
 	const { ACTION } = CameraControlsImpl;
 	const controlsRef = useRef<CameraControlsImpl>(null);
@@ -180,14 +180,14 @@ export function Scene({
 				})}
 			</Suspense>
 
-            <OctahedronMarkers
-                color={markerColor ?? "#ff3366"}
-                colorsByKey={colorsByKey}
-                coordMap={{ xKey: "x", zKey: "y", invertZ: true }}
-                height={0.1}
-                spinSpeed={markerSpinSpeed}
-                selectedKeys={selectedLandmarks}
-            />
+			<OctahedronMarkers
+				color={markerColor ?? "#ff3366"}
+				colorsByKey={colorsByKey}
+				coordMap={{ xKey: "x", zKey: "y", invertZ: true }}
+				height={0.1}
+				spinSpeed={markerSpinSpeed}
+				selectedKeys={selectedLandmarks}
+			/>
 
 			{/*<WaveWireframeMesh*/}
 			{/*    size={60}*/}

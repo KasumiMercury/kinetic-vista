@@ -10,7 +10,13 @@ import { useDebug } from "./hooks/useDebug";
 import { OptionPanel } from "./components/OptionPanel";
 import { LandmarkDirectionPanel } from "./components/LandmarkDirectionPanel";
 import { getOrCreateUserIdentity } from "./utils/userIdentity";
-import { connectOnce, sendSelection, sendDeselection, subscribeSelection, subscribeWelcome } from "./utils/wsClient";
+import {
+	connectOnce,
+	sendSelection,
+	sendDeselection,
+	subscribeSelection,
+	subscribeWelcome,
+} from "./utils/wsClient";
 
 // Lazy-load debug-only panels so they are not bundled unless needed
 const CameraControlsPanel = lazy(() =>
@@ -29,10 +35,12 @@ function App() {
 	const [useCameraControls, setUseCameraControls] = useState(true);
 	const [timeOverride, setTimeOverride] = useState<number | null>(null); // 時刻オーバーライド (0-23時間)
 	const [useManualRotation, setUseManualRotation] = useState(false); // 手動制御モード
-    const [selectedLandmarks, setSelectedLandmarks] = useState<string[]>([]); // 複数選択
-    const [identity, setIdentity] = useState(() => getOrCreateUserIdentity());
-    const { userId, color } = identity;
-    const [remoteSelections, setRemoteSelections] = useState<Record<string, { userId: string; color: string; ts: number }>>({});
+	const [selectedLandmarks, setSelectedLandmarks] = useState<string[]>([]); // 複数選択
+	const [identity, setIdentity] = useState(() => getOrCreateUserIdentity());
+	const { userId, color } = identity;
+	const [remoteSelections, setRemoteSelections] = useState<
+		Record<string, { userId: string; color: string; ts: number }>
+	>({});
 
 	// Debug flag (enabled via ?debug, #debug, or localStorage)
 	const debug = useDebug();
@@ -68,84 +76,92 @@ function App() {
 	]);
 
 	// 滑らかな補間を適用
-    const smoothRotation = useSmoothRotation(rotation, {
-        interpolationSpeed: 0.15, // 少し早めの補間速度
-        threshold: 0.05, // 小さな変化も検出
-    });
+	const smoothRotation = useSmoothRotation(rotation, {
+		interpolationSpeed: 0.15, // 少し早めの補間速度
+		threshold: 0.05, // 小さな変化も検出
+	});
 
-    // Log user identity (UUID + color)
-    useEffect(() => {
-        console.info(`[kv-front] userId=${userId} color=${color}`);
-    }, [userId, color]);
+	// Log user identity (UUID + color)
+	useEffect(() => {
+		console.info(`[kv-front] userId=${userId} color=${color}`);
+	}, [userId, color]);
 
-    // One-shot WebSocket connection attempt
-    useEffect(() => {
-        try {
-            connectOnce({ userId, color });
-        } catch (e) {
-            console.warn("[ws] connect attempt failed:", e);
-        }
-    }, [userId, color]);
+	// One-shot WebSocket connection attempt
+	useEffect(() => {
+		try {
+			connectOnce({ userId, color });
+		} catch (e) {
+			console.warn("[ws] connect attempt failed:", e);
+		}
+	}, [userId, color]);
 
-    // Adopt server-assigned identity to ensure color matches across clients
-    useEffect(() => {
-        const unsub = subscribeWelcome((evt) => {
-            setIdentity({ userId: evt.userId, color: evt.color });
-        });
-        return () => unsub();
-    }, []);
+	// Adopt server-assigned identity to ensure color matches across clients
+	useEffect(() => {
+		const unsub = subscribeWelcome((evt) => {
+			setIdentity({ userId: evt.userId, color: evt.color });
+		});
+		return () => unsub();
+	}, []);
 
-    // Subscribe to selection broadcasts from other users
-    useEffect(() => {
-        const unsub = subscribeSelection((evt) => {
-            if (evt.type === "selection") {
-                setRemoteSelections((prev) => ({
-                    ...prev,
-                    [evt.landmarkKey]: { userId: evt.userId, color: evt.color, ts: Date.now() },
-                }));
-            } else {
-                // deselection: only clear if current owner matches this user
-                setRemoteSelections((prev) => {
-                    const cur = prev[evt.landmarkKey];
-                    if (cur && cur.userId === evt.userId) {
-                        const { [evt.landmarkKey]: _omit, ...rest } = prev;
-                        return rest;
-                    }
-                    return prev;
-                });
-            }
-        });
-        return () => unsub();
-    }, []);
+	// Subscribe to selection broadcasts from other users
+	useEffect(() => {
+		const unsub = subscribeSelection((evt) => {
+			if (evt.type === "selection") {
+				setRemoteSelections((prev) => ({
+					...prev,
+					[evt.landmarkKey]: {
+						userId: evt.userId,
+						color: evt.color,
+						ts: Date.now(),
+					},
+				}));
+			} else {
+				// deselection: only clear if current owner matches this user
+				setRemoteSelections((prev) => {
+					const cur = prev[evt.landmarkKey];
+					if (cur && cur.userId === evt.userId) {
+						const { [evt.landmarkKey]: _omit, ...rest } = prev;
+						return rest;
+					}
+					return prev;
+				});
+			}
+		});
+		return () => unsub();
+	}, []);
 
-    const handleLandmarkChange = (next: string[]) => {
-        const prev = selectedLandmarks[0];
-        const curr = next[0];
-        if (prev && prev !== curr) {
-            sendDeselection(userId, prev);
-        }
-        if (curr && curr !== prev) {
-            sendSelection(userId, curr);
-        }
-        if (!curr && prev) {
-            sendDeselection(userId, prev);
-        }
-        setSelectedLandmarks(next);
-    };
+	const handleLandmarkChange = (next: string[]) => {
+		const prev = selectedLandmarks[0];
+		const curr = next[0];
+		if (prev && prev !== curr) {
+			sendDeselection(userId, prev);
+		}
+		if (curr && curr !== prev) {
+			sendSelection(userId, curr);
+		}
+		if (!curr && prev) {
+			sendDeselection(userId, prev);
+		}
+		setSelectedLandmarks(next);
+	};
 
-    // Derive union of selected landmarks (local + remote) for display panels
-    const displaySelectedKeys = Array.from(
-        new Set([...selectedLandmarks, ...Object.keys(remoteSelections)])
-    );
-    // Per-key color with priority: mine overrides remote if I selected it
-    const colorsByKey = displaySelectedKeys.reduce<Record<string, string>>((acc, key) => {
-        if (selectedLandmarks.includes(key)) acc[key] = color; // my color wins
-        else acc[key] = remoteSelections[key]?.color ?? color;
-        return acc;
-    }, {});
+	// Derive union of selected landmarks (local + remote) for display panels
+	const displaySelectedKeys = Array.from(
+		new Set([...selectedLandmarks, ...Object.keys(remoteSelections)]),
+	);
+	// Per-key color with priority: mine overrides remote if I selected it
+	const colorsByKey = displaySelectedKeys.reduce<Record<string, string>>(
+		(acc, key) => {
+			if (selectedLandmarks.includes(key))
+				acc[key] = color; // my color wins
+			else acc[key] = remoteSelections[key]?.color ?? color;
+			return acc;
+		},
+		{},
+	);
 
-    return (
-        <div className="relative w-screen h-screen">
+	return (
+		<div className="relative w-screen h-screen">
 			{debug && (
 				<Suspense>
 					<CameraControlsPanel
@@ -210,36 +226,36 @@ function App() {
 			)}
 
 			{/* Landmark方向表示パネル（画面上部・最前面） */}
-            <LandmarkDirectionPanel
-                cameraRotation={useManualRotation ? rotation : smoothRotation}
-                selectedLandmarks={displaySelectedKeys}
-                mySelectedKeys={selectedLandmarks}
-                color={color}
-                colorsByKey={colorsByKey}
-                coordMap={{ xKey: "x", zKey: "y", invertZ: true }}
-            />
+			<LandmarkDirectionPanel
+				cameraRotation={useManualRotation ? rotation : smoothRotation}
+				selectedLandmarks={displaySelectedKeys}
+				mySelectedKeys={selectedLandmarks}
+				color={color}
+				colorsByKey={colorsByKey}
+				coordMap={{ xKey: "x", zKey: "y", invertZ: true }}
+			/>
 
 			{/* Landmark 選択パネル（左下・最前面） */}
-            <LandmarkPanel
-                selectedKeys={selectedLandmarks}
-                onChange={handleLandmarkChange}
-                color={color}
-                remoteColorsByKey={colorsByKey}
-            />
+			<LandmarkPanel
+				selectedKeys={selectedLandmarks}
+				onChange={handleLandmarkChange}
+				color={color}
+				remoteColorsByKey={colorsByKey}
+			/>
 
-            <Canvas shadows>
-                <Scene
-                    rotation={useManualRotation ? rotation : smoothRotation}
-                    useCameraControls={useCameraControls}
-                    onRotationChange={setRotation}
-                    timeOverride={timeOverride}
-                    selectedLandmarks={displaySelectedKeys}
-                    markerColor={color}
-                    colorsByKey={colorsByKey}
-                />
-            </Canvas>
-        </div>
-    );
+			<Canvas shadows>
+				<Scene
+					rotation={useManualRotation ? rotation : smoothRotation}
+					useCameraControls={useCameraControls}
+					onRotationChange={setRotation}
+					timeOverride={timeOverride}
+					selectedLandmarks={displaySelectedKeys}
+					markerColor={color}
+					colorsByKey={colorsByKey}
+				/>
+			</Canvas>
+		</div>
+	);
 }
 
 export default App;

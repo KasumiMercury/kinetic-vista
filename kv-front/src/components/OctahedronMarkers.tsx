@@ -21,18 +21,18 @@ type CoordMap = {
 };
 
 type OctahedronMarkersProps = Omit<
-    JSX.IntrinsicElements["group"],
-    "scale" | "rotation"
+	JSX.IntrinsicElements["group"],
+	"scale" | "rotation"
 > & {
-    // Global appearance
-    color?: string;
-    colorsByKey?: Record<string, string>;
-    scale?: ScaleLike;
-    yaw?: number;
-    rotation?: RotationLike;
-    coordMap?: CoordMap;
-    // Keys of landmarks to render. If omitted, renders all.
-    selectedKeys?: string[];
+	// Global appearance
+	color?: string;
+	colorsByKey?: Record<string, string>;
+	scale?: ScaleLike;
+	yaw?: number;
+	rotation?: RotationLike;
+	coordMap?: CoordMap;
+	// Keys of landmarks to render. If omitted, renders all.
+	selectedKeys?: string[];
 	// Base display height (lowest vertex will be at this height)
 	height?: number;
 	// Y-axis rotation speed in radians per second (applied to each marker)
@@ -53,13 +53,13 @@ const DEFAULT_COLOR = "#ff3366";
 const DEFAULT_RADIUS = 0.12; // used only if landmark radius is missing
 
 export function OctahedronMarkers({
-    color = DEFAULT_COLOR,
-    colorsByKey,
-    scale,
-    rotation,
-    yaw,
-    coordMap,
-    selectedKeys,
+	color = DEFAULT_COLOR,
+	colorsByKey,
+	scale,
+	rotation,
+	yaw,
+	coordMap,
+	selectedKeys,
 	height = 0,
 	spinSpeed = 0,
 	...groupProps
@@ -131,21 +131,21 @@ export function OctahedronMarkers({
 				// Position Y so the lowest vertex sits at `height + heightOffset`
 				const centerY = height + (entry.heightOffset ?? 0) + r;
 
-                const c = colorsByKey?.[key] ?? color;
-                return (
-                    <OctahedronMarker
-                        key={key}
-                        x={rx}
-                        y={centerY}
-                        z={rz}
-                        radius={r}
-                        color={c}
-                        ref={(el) => {
-                            if (el) meshRefs.current[i] = el;
-                        }}
-                    />
-                );
-            })}
+				const c = colorsByKey?.[key] ?? color;
+				return (
+					<OctahedronMarker
+						key={key}
+						x={rx}
+						y={centerY}
+						z={rz}
+						radius={r}
+						color={c}
+						ref={(el) => {
+							if (el) meshRefs.current[i] = el;
+						}}
+					/>
+				);
+			})}
 		</group>
 	);
 }
