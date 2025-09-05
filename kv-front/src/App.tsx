@@ -4,12 +4,14 @@ import { useId, useState, useEffect } from "react";
 import { Scene } from "./Scene.tsx";
 import { useOrientationSensor } from "./hooks/useOrientationSensor";
 import { useSmoothRotation } from "./hooks/useSmoothRotation";
+import { LandmarkPanel } from "./components/LandmarkPanel";
 
 function App() {
 	const [rotation, setRotation] = useState(0); // 度数で管理 (0-360°)
 	const [useCameraControls, setUseCameraControls] = useState(true);
 	const [timeOverride, setTimeOverride] = useState<number | null>(null); // 時刻オーバーライド (0-23時間)
 	const [useManualRotation, setUseManualRotation] = useState(false); // 手動制御モード
+	const [selectedLandmarks, setSelectedLandmarks] = useState<string[]>([]); // 複数選択
 	const sliderId = useId();
 	const timeId = useId();
 
@@ -315,11 +317,18 @@ function App() {
 				</div>
 			)}
 
+			{/* Landmark 選択パネル（左下・最前面） */}
+			<LandmarkPanel
+				selectedKeys={selectedLandmarks}
+				onChange={setSelectedLandmarks}
+			/>
+
 			<Canvas shadows>
 				<Scene
 					rotation={useManualRotation ? rotation : smoothRotation}
 					useCameraControls={useCameraControls}
 					timeOverride={timeOverride}
+					selectedLandmarks={selectedLandmarks}
 				/>
 			</Canvas>
 		</div>

@@ -18,19 +18,22 @@ type CoordMap = {
 };
 
 type CylinderMarkersProps = Omit<
-	JSX.IntrinsicElements["group"],
-	"scale" | "rotation"
+    JSX.IntrinsicElements["group"],
+    "scale" | "rotation"
 > & {
-	radius?: number;
-	height?: number;
-	color?: string;
-	scale?: ScaleLike;
-	yaw?: number;
-	rotation?: RotationLike;
-	coordMap?: CoordMap;
+    // Global marker appearance
+    radius?: number;
+    height?: number;
+    color?: string;
+    scale?: ScaleLike;
+    yaw?: number;
+    rotation?: RotationLike;
+    coordMap?: CoordMap;
+    // Keys of landmarks to render. If omitted, renders all.
+    selectedKeys?: string[];
 };
 
-type LocEntry = { x?: number; y?: number; z?: number };
+type LocEntry = { x?: number; y?: number; z?: number; displayJP?: string };
 type LocData = Record<string, LocEntry>;
 
 const DEFAULT_RADIUS = 0.12;
@@ -38,16 +41,17 @@ const DEFAULT_HEIGHT = 3.0;
 const DEFAULT_COLOR = "#ff3366";
 
 export function CylinderMarkers({
-	radius = DEFAULT_RADIUS,
-	height = DEFAULT_HEIGHT,
-	color = DEFAULT_COLOR,
-	scale,
-	rotation,
-	yaw,
-	coordMap,
-	...groupProps
+    radius = DEFAULT_RADIUS,
+    height = DEFAULT_HEIGHT,
+    color = DEFAULT_COLOR,
+    scale,
+    rotation,
+    yaw,
+    coordMap,
+    selectedKeys,
+    ...groupProps
 }: CylinderMarkersProps): JSX.Element {
-	const data = loc as unknown as LocData;
+    const data = loc as unknown as LocData;
 
 	const { sx, sz } = (() => {
 		if (typeof scale === "number") return { sx: scale, sz: scale };
@@ -78,14 +82,18 @@ export function CylinderMarkers({
 	const invertX = coordMap?.invertX ?? false;
 	const invertZ = coordMap?.invertZ ?? false;
 
-	return (
-		<group {...groupProps}>
-			{Object.entries(data).map(([key, entry]) => {
-				const baseX = (xKey ? (entry as never)[xKey] : entry.x) ?? 0;
-				const baseZ = (zKey ? (entry as never)[zKey] : (entry.z ?? entry.y)) ?? 0; // prefer z; fallback to y for Blender
+    return (
+        <group {...groupProps}>
+            {(
+                selectedKeys !== undefined
+                  ? Object.entries(data).filter(([key]) => selectedKeys.includes(key))
+                  : Object.entries(data)
+              ).map(([key, entry]) => {
+                const baseX = (xKey ? (entry as never)[xKey] : entry.x) ?? 0;
+                const baseZ = (zKey ? (entry as never)[zKey] : (entry.z ?? entry.y)) ?? 0; // prefer z; fallback to y for Blender
 
-				const vx = (invertX ? -baseX : baseX) * sx;
-				const vz = (invertZ ? -baseZ : baseZ) * sz;
+                const vx = (invertX ? -baseX : baseX) * sx;
+                const vz = (invertZ ? -baseZ : baseZ) * sz;
 
 				const rx = vx * cosY + vz * sinY;
 				const rz = -vx * sinY + vz * cosY;
