@@ -4,8 +4,6 @@ services:
       context: ./kv-wsrelay
       dockerfile: Dockerfile
       target: production
-    ports:
-      - "8080:8080"
     environment:
       - REDIS_ADDR=redis:6379
       - LOG_LEVEL=info
@@ -14,6 +12,8 @@ services:
       - CORS_MAX_AGE=600
     depends_on:
       - redis
+    networks:
+      - app-network
 
   redis:
     image: redis:7-alpine
@@ -21,6 +21,23 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
+    networks:
+      - app-network
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    depends_on:
+      - kv-wsrelay
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   redis-data:
