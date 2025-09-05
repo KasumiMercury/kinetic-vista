@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { getLandmarkAngles, type CoordMap } from "../utils/landmarkAngles";
-import { hexToRgba, lightenHex } from "../utils/userColor";
+import { hexToRgba } from "../utils/userColor";
 
 type LandmarkDirectionPanelProps = {
 	cameraRotation: number;

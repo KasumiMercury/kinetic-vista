@@ -1,7 +1,7 @@
 import type { JSX } from "react";
 import { useMemo, useState } from "react";
 import loc from "../assets/landmark.json";
-import { lightenHex, hexToRgba } from "../utils/userColor";
+import { hexToRgba } from "../utils/userColor";
 
 type LandmarkPanelProps = {
 	selectedKeys: string[];

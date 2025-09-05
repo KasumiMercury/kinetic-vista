@@ -101,8 +101,7 @@ export function connectOnce(identity: UserIdentity): void {
 					return;
 				}
 				if (
-					data &&
-					data.landmarkKey &&
+					data?.landmarkKey &&
 					data.userId &&
 					(data.type === "selection" || data.type === "deselection")
 				) {
