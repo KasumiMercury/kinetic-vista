@@ -33,3 +33,4 @@ dist-ssr
 *.glb
 src/model
 !src/model/index.ts
+src/assets/landmark.json
