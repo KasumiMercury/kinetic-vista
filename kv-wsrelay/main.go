@@ -46,17 +46,17 @@ type SnapshotSelection struct {
 }
 
 type SnapshotMessage struct {
-    Type       string              `json:"type"`
-    Selections []SnapshotSelection `json:"selections"`
+	Type       string              `json:"type"`
+	Selections []SnapshotSelection `json:"selections"`
 }
 
 type StatusMessage struct {
-    Type         string `json:"type"`
-    Ok           bool   `json:"ok"`
-    ServerTime   int64  `json:"serverTime"`
-    ActiveUsers  int    `json:"activeUsers"`
-    YourUserID   string `json:"yourUserId"`
-    YourColor    string `json:"yourColor"`
+	Type        string `json:"type"`
+	Ok          bool   `json:"ok"`
+	ServerTime  int64  `json:"serverTime"`
+	ActiveUsers int    `json:"activeUsers"`
+	YourUserID  string `json:"yourUserId"`
+	YourColor   string `json:"yourColor"`
 }
 
 // Client represents a connected user
@@ -454,7 +454,7 @@ func reader(h *Hub, c *Client) {
 			if payload, err := json.Marshal(out); err == nil {
 				h.broadcast <- broadcastItem{sender: c, payload: payload}
 			}
-        case "deselect", "deselection":
+		case "deselect", "deselection":
 			// Clear selection and broadcast deselection
 			ctx := context.Background()
 			rc := redisClient()
@@ -479,33 +479,33 @@ func reader(h *Hub, c *Client) {
 			if payload, err := json.Marshal(out); err == nil {
 				h.broadcast <- broadcastItem{sender: c, payload: payload}
 			}
-        case "status", "ping":
-            // Respond to requester with current status
-            ctx := context.Background()
-            rc := redisClient()
-            cnt := 0
-            if members, err := rc.SMembers(ctx, "kv:active_users").Result(); err == nil {
-                cnt = len(members)
-            }
-            msg := StatusMessage{
-                Type:        "status",
-                Ok:          true,
-                ServerTime:  time.Now().Unix(),
-                ActiveUsers: cnt,
-                YourUserID:  c.id,
-                YourColor:   c.color,
-            }
-            if payload, err := json.Marshal(msg); err == nil {
-                // send only back to requester
-                select {
-                case c.send <- payload:
-                default:
-                }
-            }
-        default:
-            // ignore unknown types
-        }
-    }
+		case "status", "ping":
+			// Respond to requester with current status
+			ctx := context.Background()
+			rc := redisClient()
+			cnt := 0
+			if members, err := rc.SMembers(ctx, "kv:active_users").Result(); err == nil {
+				cnt = len(members)
+			}
+			msg := StatusMessage{
+				Type:        "status",
+				Ok:          true,
+				ServerTime:  time.Now().Unix(),
+				ActiveUsers: cnt,
+				YourUserID:  c.id,
+				YourColor:   c.color,
+			}
+			if payload, err := json.Marshal(msg); err == nil {
+				// send only back to requester
+				select {
+				case c.send <- payload:
+				default:
+				}
+			}
+		default:
+			// ignore unknown types
+		}
+	}
 }
 
 func writer(c *Client) {
