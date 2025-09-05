@@ -9,6 +9,7 @@ import { PermissionRequestOverlay } from "./components/PermissionRequestOverlay"
 import { PermissionDeniedOverlay } from "./components/PermissionDeniedOverlay";
 import { useDebug } from "./hooks/useDebug";
 import { ControlModeToggle } from "./components/ControlModeToggle";
+import { LandmarkDirectionPanel } from "./components/LandmarkDirectionPanel";
 
 // Lazy-load debug-only panels so they are not bundled unless needed
 const CameraControlsPanel = lazy(() =>
@@ -132,6 +133,12 @@ function App() {
 					onUseManualControl={() => setUseManualRotation(true)}
 				/>
 			)}
+
+			{/* Landmark方向表示パネル（画面上部・最前面） */}
+			<LandmarkDirectionPanel
+				cameraRotation={useManualRotation ? rotation : smoothRotation}
+				selectedLandmarks={selectedLandmarks}
+			/>
 
 			{/* Landmark 選択パネル（左下・最前面） */}
 			<LandmarkPanel
