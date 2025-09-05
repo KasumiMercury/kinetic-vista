@@ -176,13 +176,13 @@ export function Scene({
 				})}
 			</Suspense>
 
-				<OctahedronMarkers
-					color="#ff3366"
-					coordMap={{ xKey: "x", zKey: "y", invertZ: true }}
-					height={0.1}
-					spinSpeed={markerSpinSpeed}
-					selectedKeys={selectedLandmarks}
-				/>
+			<OctahedronMarkers
+				color="#ff3366"
+				coordMap={{ xKey: "x", zKey: "y", invertZ: true }}
+				height={0.1}
+				spinSpeed={markerSpinSpeed}
+				selectedKeys={selectedLandmarks}
+			/>
 
 			{/*<WaveWireframeMesh*/}
 			{/*    size={60}*/}

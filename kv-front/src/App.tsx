@@ -12,14 +12,14 @@ import { ControlModeToggle } from "./components/ControlModeToggle";
 
 // Lazy-load debug-only panels so they are not bundled unless needed
 const CameraControlsPanel = lazy(() =>
-  import("./components/CameraControlsPanel").then((m) => ({
-    default: m.CameraControlsPanel,
-  })),
+	import("./components/CameraControlsPanel").then((m) => ({
+		default: m.CameraControlsPanel,
+	})),
 );
 const SensorStatusPanel = lazy(() =>
-  import("./components/SensorStatusPanel").then((m) => ({
-    default: m.SensorStatusPanel,
-  })),
+	import("./components/SensorStatusPanel").then((m) => ({
+		default: m.SensorStatusPanel,
+	})),
 );
 
 function App() {
@@ -70,7 +70,6 @@ function App() {
 
 	return (
 		<div style={{ width: "100vw", height: "100vh" }}>
-
 			{debug && (
 				<Suspense>
 					<CameraControlsPanel
@@ -84,7 +83,9 @@ function App() {
 						timeOverride={timeOverride}
 						onTimeOverrideChange={setTimeOverride}
 						currentHour={currentHour}
-						isSensorActive={!useManualRotation && sensorInfo.compassHeading !== null}
+						isSensorActive={
+							!useManualRotation && sensorInfo.compassHeading !== null
+						}
 					/>
 				</Suspense>
 			)}
@@ -99,30 +100,31 @@ function App() {
 			<ControlModeToggle
 				mode={useCameraControls ? "sensor" : "drag"}
 				permissionState={sensorInfo.permissionState}
-					onChange={async (mode) => {
-						if (mode === "sensor") {
-							setUseCameraControls(true);
-							// センサー有効化時に必要権限を取得
-							await requestPermission();
-							setUseManualRotation(false);
-						} else {
-							setUseCameraControls(false);
-							setUseManualRotation(true);
-						}
-					}}
+				onChange={async (mode) => {
+					if (mode === "sensor") {
+						setUseCameraControls(true);
+						// センサー有効化時に必要権限を取得
+						await requestPermission();
+						setUseManualRotation(false);
+					} else {
+						setUseCameraControls(false);
+						setUseManualRotation(true);
+					}
+				}}
 			/>
 
 			{/* 権限取得ボタン（画面中央・最前面） */}
-			{useCameraControls && sensorInfo.permissionState === "needs-permission" && (
-				<PermissionRequestOverlay
-					sensorTypeLabel={
-						sensorInfo.sensorType === "absolute-orientation"
-							? "AbsoluteOrientationSensor"
-							: "DeviceOrientationEvent"
-					}
-					onRequestPermission={requestPermission}
-				/>
-			)}
+			{useCameraControls &&
+				sensorInfo.permissionState === "needs-permission" && (
+					<PermissionRequestOverlay
+						sensorTypeLabel={
+							sensorInfo.sensorType === "absolute-orientation"
+								? "AbsoluteOrientationSensor"
+								: "DeviceOrientationEvent"
+						}
+						onRequestPermission={requestPermission}
+					/>
+				)}
 
 			{useCameraControls && sensorInfo.permissionState === "denied" && (
 				<PermissionDeniedOverlay
