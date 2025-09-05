@@ -1,4 +1,4 @@
-import { forwardRef, useMemo  } from "react";
+import { forwardRef, useMemo } from "react";
 import * as THREE from "three";
 
 interface WaveMaterialProps {
@@ -75,7 +75,7 @@ export const WaveMaterial = forwardRef<THREE.Material, WaveMaterialProps>(
 					Object.keys(uniforms).forEach((key) => {
 						shader.uniforms[key] = uniforms[key as keyof typeof uniforms];
 					});
-					
+
 					// Ensure direct reference to time uniform
 					shader.uniforms.uTime = uniforms.uTime;
 

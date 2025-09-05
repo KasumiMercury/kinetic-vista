@@ -72,20 +72,25 @@ class Grid {
 			for (let deltaX = -1; deltaX <= 1; deltaX++) {
 				const checkX = gridX + deltaX;
 				const checkZ = gridZ + deltaZ;
-				
-				if (checkX < 0 || checkX >= this.gridSize || checkZ < 0 || checkZ >= this.gridSize) {
+
+				if (
+					checkX < 0 ||
+					checkX >= this.gridSize ||
+					checkZ < 0 ||
+					checkZ >= this.gridSize
+				) {
 					continue;
 				}
-				
+
 				const cellIndex = checkZ * this.gridSize + checkX;
 				const particles = this.cells.get(cellIndex);
-				
+
 				if (particles) {
 					nearby.push(...particles);
 				}
 			}
 		}
-		
+
 		return nearby;
 	}
 }
@@ -116,12 +121,18 @@ export function ParticleNetwork({
 	const accumulatedTime = useRef(0);
 	const connectionCounts = useRef<number[]>([]);
 	const initialConnectionsCalculated = useRef(false);
-	
-	const targetUpdateInterval = connectionUpdateInterval / 60;
-	
-	const actualGridDivisions = useMemo(() => gridDivisions % 2 === 0 ? gridDivisions + 1 : gridDivisions, [gridDivisions]);
 
-	const memoizedCenterPosition = useMemo(() => centerPosition, [centerPosition[0], centerPosition[1], centerPosition[2]]);
+	const targetUpdateInterval = connectionUpdateInterval / 60;
+
+	const actualGridDivisions = useMemo(
+		() => (gridDivisions % 2 === 0 ? gridDivisions + 1 : gridDivisions),
+		[gridDivisions],
+	);
+
+	const memoizedCenterPosition = useMemo(
+		() => centerPosition,
+		[centerPosition[0], centerPosition[1], centerPosition[2]],
+	);
 
 	const { particlePositions, particleVelocities, linePositions } =
 		useMemo(() => {
@@ -130,7 +141,11 @@ export function ParticleNetwork({
 
 			for (let i = 0; i < particleCount; i++) {
 				const i3 = i * 3;
-				let x: number, y: number, z: number, distance: number, probability: number;
+				let x: number,
+					y: number,
+					z: number,
+					distance: number,
+					probability: number;
 				do {
 					x = (Math.random() * 2 - 1) * spawnRange;
 					y = (Math.random() * 2 - 1) * yRange;
@@ -156,7 +171,10 @@ export function ParticleNetwork({
 			connectionCounts.current = new Array(particleCount).fill(0);
 
 			// Initialize grid system with appropriate cell size
-			const cellSize = Math.max(maxLinkDistance * 1.2, spawnRange / actualGridDivisions);
+			const cellSize = Math.max(
+				maxLinkDistance * 1.2,
+				spawnRange / actualGridDivisions,
+			);
 			gridRef.current = new Grid(spawnRange * 2, cellSize);
 
 			initialConnectionsCalculated.current = false;
@@ -166,7 +184,17 @@ export function ParticleNetwork({
 				particleVelocities: velocities,
 				linePositions: linePos,
 			};
-		}, [particleCount, memoizedCenterPosition, yRange, spawnRange, velocityRange, densityFalloff, maxConnections, maxLinkDistance, actualGridDivisions]);
+		}, [
+			particleCount,
+			memoizedCenterPosition,
+			yRange,
+			spawnRange,
+			velocityRange,
+			densityFalloff,
+			maxConnections,
+			maxLinkDistance,
+			actualGridDivisions,
+		]);
 
 	useFrame((_state, delta) => {
 		if (!particlesRef.current || !linesRef.current || !gridRef.current) return;
@@ -189,7 +217,7 @@ export function ParticleNetwork({
 			const i3 = i * 3;
 
 			const deltaTimeScaled = delta * timeScale;
-			
+
 			positions[i3] += velocities[i3] * deltaTimeScaled;
 			positions[i3 + 1] += velocities[i3 + 1] * deltaTimeScaled;
 			positions[i3 + 2] += velocities[i3 + 2] * deltaTimeScaled;
@@ -218,20 +246,22 @@ export function ParticleNetwork({
 			}
 		}
 
-		const shouldUpdateConnections = !initialConnectionsCalculated.current || accumulatedTime.current >= targetUpdateInterval;
-		
+		const shouldUpdateConnections =
+			!initialConnectionsCalculated.current ||
+			accumulatedTime.current >= targetUpdateInterval;
+
 		if (shouldUpdateConnections) {
 			if (initialConnectionsCalculated.current) {
 				accumulatedTime.current = 0;
 			}
 			initialConnectionsCalculated.current = true;
-			
+
 			// Clear and rebuild grid
 			gridRef.current.clear();
-			
+
 			// Reset connection counts
 			connectionCounts.current.fill(0);
-			
+
 			// Add all particles to grid
 			for (let i = 0; i < particleCount; i++) {
 				const i3 = i * 3;
@@ -245,10 +275,18 @@ export function ParticleNetwork({
 				if (connectionCounts.current[i] >= maxConnections) continue;
 
 				const i3 = i * 3;
-				const nearbyParticles = gridRef.current.getNearbyParticles(positions[i3], positions[i3 + 2]);
+				const nearbyParticles = gridRef.current.getNearbyParticles(
+					positions[i3],
+					positions[i3 + 2],
+				);
 
 				for (const j of nearbyParticles) {
-					if (i >= j || connectionCounts.current[i] >= maxConnections || connectionCounts.current[j] >= maxConnections) continue;
+					if (
+						i >= j ||
+						connectionCounts.current[i] >= maxConnections ||
+						connectionCounts.current[j] >= maxConnections
+					)
+						continue;
 
 					const j3 = j * 3;
 
@@ -262,17 +300,19 @@ export function ParticleNetwork({
 					const dz1 = tempVector1.z - memoizedCenterPosition[2];
 					const centerDistanceSqP1 = dx1 * dx1 + dz1 * dz1;
 					const centerDistanceP1 = Math.sqrt(centerDistanceSqP1) / spawnRange;
-					
+
 					const dx2 = tempVector2.x - memoizedCenterPosition[0];
 					const dz2 = tempVector2.z - memoizedCenterPosition[2];
 					const centerDistanceSqP2 = dx2 * dx2 + dz2 * dz2;
 					const centerDistanceP2 = Math.sqrt(centerDistanceSqP2) / spawnRange;
 
 					const avgCenterDistance = (centerDistanceP1 + centerDistanceP2) / 2;
-					const dynamicMaxDistance = densityFalloff > 0
-						? maxLinkDistance * (1 + avgCenterDistance * densityFalloff * 0.5)
-						: maxLinkDistance;
-					const dynamicMaxDistanceSquared = dynamicMaxDistance * dynamicMaxDistance;
+					const dynamicMaxDistance =
+						densityFalloff > 0
+							? maxLinkDistance * (1 + avgCenterDistance * densityFalloff * 0.5)
+							: maxLinkDistance;
+					const dynamicMaxDistanceSquared =
+						dynamicMaxDistance * dynamicMaxDistance;
 
 					if (distSq < dynamicMaxDistanceSquared) {
 						// Create connection
@@ -288,7 +328,7 @@ export function ParticleNetwork({
 						linePositions[baseIndex + 5] = tempVector2.z;
 
 						lineVertexIndex++;
-						
+
 						// Break if we've reached max connections for particle i
 						if (connectionCounts.current[i] >= maxConnections) break;
 					}
@@ -299,14 +339,13 @@ export function ParticleNetwork({
 			const lineGeometry = linesRef.current.geometry;
 			lineGeometry.setDrawRange(0, lineVertexIndex * 2);
 			lineGeometry.attributes.position.needsUpdate = true;
-			
+
 			lastLineCount.current = lineVertexIndex;
 		}
-		
+
 		// Update particle positions (every frame)
 		particlesRef.current.geometry.attributes.position.needsUpdate = true;
 	});
-
 
 	return (
 		<>
@@ -339,10 +378,10 @@ export function ParticleNetwork({
 						usage={THREE.DynamicDrawUsage}
 					/>
 				</bufferGeometry>
-				<lineBasicMaterial 
+				<lineBasicMaterial
 					color={linkColor}
 					linewidth={1}
-					transparent 
+					transparent
 					fog
 					toneMapped={false}
 				/>

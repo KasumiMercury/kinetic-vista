@@ -18,9 +18,9 @@ export const DirectionalColorMaterial = forwardRef<
 	DirectionalColorMaterialProps
 >(
 	(
-		{ 
-			transparent = false, 
-			opacity = 0.5, 
+		{
+			transparent = false,
+			opacity = 0.5,
 			side = THREE.FrontSide,
 			positiveXColor = "#ffb3b3",
 			negativeXColor = "#b3ffb3",
@@ -28,7 +28,7 @@ export const DirectionalColorMaterial = forwardRef<
 			negativeYColor = "#ffb3ff",
 			positiveZColor = "#ffb3ff",
 			negativeZColor = "#b3ffff",
-			...props 
+			...props
 		},
 		ref,
 	) => {
@@ -41,12 +41,24 @@ export const DirectionalColorMaterial = forwardRef<
 				{...props}
 				onBeforeCompile={(shader) => {
 					// uniform変数を追加
-					shader.uniforms.uPositiveXColor = { value: new THREE.Color(positiveXColor) };
-					shader.uniforms.uNegativeXColor = { value: new THREE.Color(negativeXColor) };
-					shader.uniforms.uPositiveYColor = { value: new THREE.Color(positiveYColor) };
-					shader.uniforms.uNegativeYColor = { value: new THREE.Color(negativeYColor) };
-					shader.uniforms.uPositiveZColor = { value: new THREE.Color(positiveZColor) };
-					shader.uniforms.uNegativeZColor = { value: new THREE.Color(negativeZColor) };
+					shader.uniforms.uPositiveXColor = {
+						value: new THREE.Color(positiveXColor),
+					};
+					shader.uniforms.uNegativeXColor = {
+						value: new THREE.Color(negativeXColor),
+					};
+					shader.uniforms.uPositiveYColor = {
+						value: new THREE.Color(positiveYColor),
+					};
+					shader.uniforms.uNegativeYColor = {
+						value: new THREE.Color(negativeYColor),
+					};
+					shader.uniforms.uPositiveZColor = {
+						value: new THREE.Color(positiveZColor),
+					};
+					shader.uniforms.uNegativeZColor = {
+						value: new THREE.Color(negativeZColor),
+					};
 
 					shader.vertexShader = shader.vertexShader.replace(
 						"#include <common>",

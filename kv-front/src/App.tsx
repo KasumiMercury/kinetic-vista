@@ -21,15 +21,23 @@ function App() {
 
 	// センサー値をrotationに反映
 	useEffect(() => {
-		if (!useManualRotation && sensorInfo.compassHeading !== null && sensorInfo.permissionState === 'granted') {
+		if (
+			!useManualRotation &&
+			sensorInfo.compassHeading !== null &&
+			sensorInfo.permissionState === "granted"
+		) {
 			setRotation(sensorInfo.compassHeading);
 		}
-	}, [sensorInfo.compassHeading, useManualRotation, sensorInfo.permissionState]);
+	}, [
+		sensorInfo.compassHeading,
+		useManualRotation,
+		sensorInfo.permissionState,
+	]);
 
 	// 滑らかな補間を適用
 	const smoothRotation = useSmoothRotation(rotation, {
 		interpolationSpeed: 0.15, // 少し早めの補間速度
-		threshold: 0.05 // 小さな変化も検出
+		threshold: 0.05, // 小さな変化も検出
 	});
 
 	return (
@@ -67,7 +75,10 @@ function App() {
 				</label>
 				<br />
 				<label htmlFor={sliderId}>
-					Camera Rotation: {Math.round(smoothRotation)}° {!useManualRotation && sensorInfo.compassHeading !== null ? "(Sensor)" : "(Manual)"}
+					Camera Rotation: {Math.round(smoothRotation)}°{" "}
+					{!useManualRotation && sensorInfo.compassHeading !== null
+						? "(Sensor)"
+						: "(Manual)"}
 				</label>
 				<br />
 				<input
@@ -93,7 +104,10 @@ function App() {
 				</label>
 				<br />
 				<label htmlFor={timeId}>
-					Time: {timeOverride !== null ? `${timeOverride}:00` : `${currentHour}:00 (Real-time)`}
+					Time:{" "}
+					{timeOverride !== null
+						? `${timeOverride}:00`
+						: `${currentHour}:00 (Real-time)`}
 				</label>
 				<br />
 				<input
@@ -124,33 +138,62 @@ function App() {
 					minWidth: "200px",
 				}}
 			>
-				<div style={{ fontWeight: "bold", marginBottom: "5px" }}>Sensor Status</div>
-				<div>API: {sensorInfo.sensorType === 'absolute-orientation' ? 'AbsoluteOrientationSensor' : 
-					sensorInfo.sensorType === 'device-orientation' ? 'DeviceOrientationEvent' : 'Unsupported'}</div>
+				<div style={{ fontWeight: "bold", marginBottom: "5px" }}>
+					Sensor Status
+				</div>
+				<div>
+					API:{" "}
+					{sensorInfo.sensorType === "absolute-orientation"
+						? "AbsoluteOrientationSensor"
+						: sensorInfo.sensorType === "device-orientation"
+							? "DeviceOrientationEvent"
+							: "Unsupported"}
+				</div>
 				<div>Status: {sensorInfo.permissionState}</div>
-				<div>Heading: {sensorInfo.compassHeading !== null ? `${sensorInfo.compassHeading}°` : 'N/A'}</div>
-				<div>Listening: {sensorInfo.isListening ? 'Yes' : 'No'}</div>
-				{sensorInfo.sensorType === 'absolute-orientation' && sensorInfo.quaternion && (
-					<div style={{ marginTop: "5px" }}>
-						<div>Quaternion:</div>
-						<div>X: {sensorInfo.quaternion[0].toFixed(3)}</div>
-						<div>Y: {sensorInfo.quaternion[1].toFixed(3)}</div>
-						<div>Z: {sensorInfo.quaternion[2].toFixed(3)}</div>
-						<div>W: {sensorInfo.quaternion[3].toFixed(3)}</div>
-					</div>
-				)}
-				{sensorInfo.sensorType === 'device-orientation' && (
+				<div>
+					Heading:{" "}
+					{sensorInfo.compassHeading !== null
+						? `${sensorInfo.compassHeading}°`
+						: "N/A"}
+				</div>
+				<div>Listening: {sensorInfo.isListening ? "Yes" : "No"}</div>
+				{sensorInfo.sensorType === "absolute-orientation" &&
+					sensorInfo.quaternion && (
+						<div style={{ marginTop: "5px" }}>
+							<div>Quaternion:</div>
+							<div>X: {sensorInfo.quaternion[0].toFixed(3)}</div>
+							<div>Y: {sensorInfo.quaternion[1].toFixed(3)}</div>
+							<div>Z: {sensorInfo.quaternion[2].toFixed(3)}</div>
+							<div>W: {sensorInfo.quaternion[3].toFixed(3)}</div>
+						</div>
+					)}
+				{sensorInfo.sensorType === "device-orientation" && (
 					<div style={{ marginTop: "5px" }}>
 						<div>Orientation:</div>
-						<div>α: {sensorInfo.orientation.alpha !== null ? `${sensorInfo.orientation.alpha.toFixed(1)}°` : 'N/A'}</div>
-						<div>β: {sensorInfo.orientation.beta !== null ? `${sensorInfo.orientation.beta.toFixed(1)}°` : 'N/A'}</div>
-						<div>γ: {sensorInfo.orientation.gamma !== null ? `${sensorInfo.orientation.gamma.toFixed(1)}°` : 'N/A'}</div>
+						<div>
+							α:{" "}
+							{sensorInfo.orientation.alpha !== null
+								? `${sensorInfo.orientation.alpha.toFixed(1)}°`
+								: "N/A"}
+						</div>
+						<div>
+							β:{" "}
+							{sensorInfo.orientation.beta !== null
+								? `${sensorInfo.orientation.beta.toFixed(1)}°`
+								: "N/A"}
+						</div>
+						<div>
+							γ:{" "}
+							{sensorInfo.orientation.gamma !== null
+								? `${sensorInfo.orientation.gamma.toFixed(1)}°`
+								: "N/A"}
+						</div>
 					</div>
 				)}
 			</div>
 
 			{/* 権限取得ボタン（画面中央・最前面） */}
-			{sensorInfo.permissionState === 'needs-permission' && (
+			{sensorInfo.permissionState === "needs-permission" && (
 				<div
 					style={{
 						position: "fixed",
@@ -177,11 +220,14 @@ function App() {
 					>
 						<h2 style={{ marginTop: 0 }}>Enable Orientation Sensing</h2>
 						<p>
-							This app uses device orientation to control the camera direction. 
+							This app uses device orientation to control the camera direction.
 							Please grant permission to access motion sensors.
 						</p>
 						<p style={{ fontSize: "14px", color: "#666" }}>
-							Sensor Type: {sensorInfo.sensorType === 'absolute-orientation' ? 'AbsoluteOrientationSensor' : 'DeviceOrientationEvent'}
+							Sensor Type:{" "}
+							{sensorInfo.sensorType === "absolute-orientation"
+								? "AbsoluteOrientationSensor"
+								: "DeviceOrientationEvent"}
 						</p>
 						<button
 							type="button"
@@ -202,7 +248,7 @@ function App() {
 				</div>
 			)}
 
-			{sensorInfo.permissionState === 'denied' && (
+			{sensorInfo.permissionState === "denied" && (
 				<div
 					style={{
 						position: "fixed",
@@ -227,9 +273,12 @@ function App() {
 							maxWidth: "400px",
 						}}
 					>
-						<h2 style={{ marginTop: 0, color: "#dc3545" }}>Permission Denied</h2>
+						<h2 style={{ marginTop: 0, color: "#dc3545" }}>
+							Permission Denied
+						</h2>
 						<p>
-							Motion sensor access was denied. You can still use manual rotation controls.
+							Motion sensor access was denied. You can still use manual rotation
+							controls.
 						</p>
 						<button
 							type="button"
@@ -267,8 +316,8 @@ function App() {
 			)}
 
 			<Canvas shadows>
-				<Scene 
-					rotation={useManualRotation ? rotation : smoothRotation} 
+				<Scene
+					rotation={useManualRotation ? rotation : smoothRotation}
 					useCameraControls={useCameraControls}
 					timeOverride={timeOverride}
 				/>
