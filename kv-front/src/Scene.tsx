@@ -1,10 +1,6 @@
-import {
-	CameraControls,
-	CameraControlsImpl,
-	OrbitControls,
-	Sky,
-} from "@react-three/drei";
+import { CameraControls, CameraControlsImpl, Sky } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
+import { useSmoothRotation } from "./hooks/useSmoothRotation";
 // import {Perf} from "r3f-perf";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { ParticleNetwork } from "./components/ParticleNetwork";
@@ -21,7 +17,8 @@ import {
 
 type SceneProps = {
 	rotation: number;
-	useCameraControls: boolean;
+	useCameraControls: boolean; // true: sensor mode, false: drag mode
+	onRotationChange?: (value: number) => void;
 	compassOffset?: number;
 	timeOverride?: number | null;
 	selectedLandmarks?: string[];
@@ -30,6 +27,7 @@ type SceneProps = {
 export function Scene({
 	rotation,
 	useCameraControls,
+	onRotationChange,
 	compassOffset = 0,
 	timeOverride,
 	selectedLandmarks,
@@ -79,16 +77,80 @@ export function Scene({
 		};
 	};
 
+	// Smooth manual (drag) rotation to avoid stutter; sensor already smoothed in App
+	const manualSmoothRotation = useSmoothRotation(rotation, {
+		interpolationSpeed: 0.15,
+		threshold: 0.05,
+	});
+	const displayedRotation = useCameraControls ? rotation : manualSmoothRotation;
+
 	useFrame(() => {
-		if (controlsRef.current && useCameraControls) {
+		if (controlsRef.current) {
 			controlsRef.current.setPosition(0, 0.2, 0);
-
 			const targetRadius = 5;
-			const target = convertCompassToTarget(rotation, targetRadius);
-
+			const target = convertCompassToTarget(displayedRotation, targetRadius);
 			controlsRef.current.setTarget(target.x, 0, target.z);
 		}
-		});
+	});
+
+	// Keep live rotation in a ref for drag start
+	const liveRotationRef = useRef(rotation);
+	useEffect(() => {
+		liveRotationRef.current = rotation;
+	}, [rotation]);
+
+	// Horizontal-only drag handling for manual mode (no zoom/pan, position fixed)
+	useEffect(() => {
+		if (useCameraControls) return; // only in drag mode
+		const el = gl.domElement;
+
+		let dragging = false;
+		let startX = 0;
+		let startRotation = liveRotationRef.current;
+		const sensitivity = 0.25; // degrees per pixel
+
+		const normalize = (deg: number) => {
+			let d = deg % 360;
+			if (d < 0) d += 360;
+			return d;
+		};
+
+		const onDown = (e: PointerEvent) => {
+			dragging = true;
+			startX = e.clientX;
+			startRotation = liveRotationRef.current;
+			el.setPointerCapture(e.pointerId);
+			e.preventDefault();
+		};
+
+		const onMove = (e: PointerEvent) => {
+			if (!dragging) return;
+			const dx = e.clientX - startX;
+			const next = normalize(startRotation - dx * sensitivity);
+			onRotationChange?.(next);
+			e.preventDefault();
+		};
+
+		const onUp = (e: PointerEvent) => {
+			dragging = false;
+			try {
+				el.releasePointerCapture(e.pointerId);
+			} catch {}
+			e.preventDefault();
+		};
+
+		el.addEventListener("pointerdown", onDown, { passive: false });
+		window.addEventListener("pointermove", onMove, { passive: false });
+		window.addEventListener("pointerup", onUp, { passive: false });
+		window.addEventListener("pointercancel", onUp, { passive: false });
+
+		return () => {
+			el.removeEventListener("pointerdown", onDown as any);
+			window.removeEventListener("pointermove", onMove as any);
+			window.removeEventListener("pointerup", onUp as any);
+			window.removeEventListener("pointercancel", onUp as any);
+		};
+	}, [gl, useCameraControls, onRotationChange]);
 
 	// Marker spin speed (radians per second). Adjust here centrally.
 	const markerSpinSpeed = 0.6;
@@ -178,25 +240,21 @@ export function Scene({
 			/>
 			<ambientLight intensity={5} />
 
-			{useCameraControls ? (
-				<CameraControls
-					ref={controlsRef}
-					makeDefault
-					mouseButtons={{
-						left: ACTION.NONE,
-						middle: ACTION.NONE,
-						right: ACTION.NONE,
-						wheel: ACTION.NONE,
-					}}
-					touches={{
-						one: ACTION.NONE,
-						two: ACTION.NONE,
-						three: ACTION.NONE,
-					}}
-				/>
-			) : (
-				<OrbitControls />
-			)}
+			<CameraControls
+				ref={controlsRef}
+				makeDefault
+				mouseButtons={{
+					left: ACTION.NONE,
+					middle: ACTION.NONE,
+					right: ACTION.NONE,
+					wheel: ACTION.NONE,
+				}}
+				touches={{
+					one: ACTION.NONE,
+					two: ACTION.NONE,
+					three: ACTION.NONE,
+				}}
+			/>
 		</>
 	);
 }

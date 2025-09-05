@@ -8,6 +8,7 @@ import { LandmarkPanel } from "./components/LandmarkPanel";
 import { PermissionRequestOverlay } from "./components/PermissionRequestOverlay";
 import { PermissionDeniedOverlay } from "./components/PermissionDeniedOverlay";
 import { useDebug } from "./hooks/useDebug";
+import { ControlModeToggle } from "./components/ControlModeToggle";
 
 // Lazy-load debug-only panels so they are not bundled unless needed
 const CameraControlsPanel = lazy(() =>
@@ -36,6 +37,15 @@ function App() {
 
 	// センサー機能
 	const [sensorInfo, requestPermission] = useOrientationSensor();
+
+	// 端末種別でデフォルト操作を切り替え（PC: ドラッグ / スマホ: センサー）
+	useEffect(() => {
+		const ua = navigator.userAgent.toLowerCase();
+		const isMobile = /iphone|ipod|ipad|android/.test(ua);
+		setUseCameraControls(isMobile); // true: センサー, false: ドラッグ
+		// ドラッグ時は手動スライダーは使わない方針のため false に揃える
+		setUseManualRotation(false);
+	}, []);
 
 	// センサー値をrotationに反映
 	useEffect(() => {
@@ -85,8 +95,25 @@ function App() {
 				</Suspense>
 			)}
 
+			{/* 操作モード切替（画面右上・最前面） */}
+			<ControlModeToggle
+				mode={useCameraControls ? "sensor" : "drag"}
+				permissionState={sensorInfo.permissionState}
+					onChange={async (mode) => {
+						if (mode === "sensor") {
+							setUseCameraControls(true);
+							// センサー有効化時に必要権限を取得
+							await requestPermission();
+							setUseManualRotation(false);
+						} else {
+							setUseCameraControls(false);
+							setUseManualRotation(true);
+						}
+					}}
+			/>
+
 			{/* 権限取得ボタン（画面中央・最前面） */}
-			{sensorInfo.permissionState === "needs-permission" && (
+			{useCameraControls && sensorInfo.permissionState === "needs-permission" && (
 				<PermissionRequestOverlay
 					sensorTypeLabel={
 						sensorInfo.sensorType === "absolute-orientation"
@@ -97,7 +124,7 @@ function App() {
 				/>
 			)}
 
-			{sensorInfo.permissionState === "denied" && (
+			{useCameraControls && sensorInfo.permissionState === "denied" && (
 				<PermissionDeniedOverlay
 					onTryAgain={requestPermission}
 					onUseManualControl={() => setUseManualRotation(true)}
@@ -114,6 +141,7 @@ function App() {
 				<Scene
 					rotation={useManualRotation ? rotation : smoothRotation}
 					useCameraControls={useCameraControls}
+					onRotationChange={setRotation}
 					timeOverride={timeOverride}
 					selectedLandmarks={selectedLandmarks}
 				/>
