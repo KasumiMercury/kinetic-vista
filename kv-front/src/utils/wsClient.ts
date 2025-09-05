@@ -81,6 +81,18 @@ export function connectOnce(identity: UserIdentity): void {
             };
             selectionHandlers.forEach((h) => { try { h(evt); } catch {} });
           }
+        } else if (data && data.type === "snapshot" && Array.isArray(data.selections)) {
+          // Initial snapshot: replay as selection events
+          for (const s of data.selections) {
+            if (!s) continue;
+            const evt: SelectionEvent = {
+              type: "selection",
+              userId: String(s.userId),
+              landmarkKey: String(s.landmarkKey),
+              color: typeof s.color === "string" ? s.color : "#FF3366",
+            };
+            selectionHandlers.forEach((h) => { try { h(evt); } catch {} });
+          }
         }
       } catch {
         // ignore non-JSON

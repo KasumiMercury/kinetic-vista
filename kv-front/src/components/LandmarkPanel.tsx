@@ -56,7 +56,7 @@ export function LandmarkPanel({
 						{items.map(({ key, displayJP }) => {
 							const selected = selectedKeys.includes(key);
                         const bg = color ?? "#ff3366";
-                        const border = lightenHex(bg, 0.3);
+                        const border = bg; // use same color to avoid hue shift
                         const shadow = hexToRgba(bg, 0.5);
                         const remote = remoteColorsByKey?.[key];
                         return (
@@ -68,13 +68,15 @@ export function LandmarkPanel({
                                 className={`w-full cursor-pointer rounded-lg px-2.5 py-2 text-left text-[13px] leading-[1.2] text-white ${
                                     selected
                                         ? "border"
-                                        : "border border-white/25 bg-white/10"
+                                        : remote
+                                            ? "border"
+                                            : "border border-white/25 bg-white/10"
                                 }`}
                                 style={
                                     selected
                                         ? { backgroundColor: bg, borderColor: border, boxShadow: `0 0 8px ${shadow}` }
                                         : remote
-                                            ? { borderColor: lightenHex(remote, 0.3), boxShadow: `0 0 6px ${hexToRgba(remote, 0.4)}` }
+                                            ? { backgroundColor: remote, borderColor: remote, boxShadow: `0 0 6px ${hexToRgba(remote, 0.35)}` }
                                             : undefined
                                 }
                             >

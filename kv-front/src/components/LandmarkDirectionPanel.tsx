@@ -122,8 +122,8 @@ export function LandmarkDirectionPanel({
                             width: `${landmark.isSelected ? MARKER_SIZE_SELECTED : MARKER_SIZE_NORMAL}px`,
                             height: `${landmark.isSelected ? MARKER_SIZE_SELECTED : MARKER_SIZE_NORMAL}px`,
                             backgroundColor: landmark.isSelected ? (colorsByKey?.[landmark.key] ?? markerColor) : "transparent",
-                            borderColor: landmark.isSelected ? lightenHex(colorsByKey?.[landmark.key] ?? markerColor, 0.3) : "black",
-                            boxShadow: landmark.isSelected ? `0 0 8px ${hexToRgba(colorsByKey?.[landmark.key] ?? markerColor, 0.5)}` : undefined,
+                            borderColor: landmark.isSelected ? (colorsByKey?.[landmark.key] ?? markerColor) : "black",
+                            boxShadow: landmark.isSelected ? `0 0 8px ${hexToRgba(colorsByKey?.[landmark.key] ?? markerColor, 0.45)}` : undefined,
                         }}
                         title={`${landmark.displayJP} (${Math.round(landmark.relativeAngle)}°)`}
                     >
