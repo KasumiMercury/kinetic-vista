@@ -20,8 +20,7 @@ export function LandmarkPanel({
 	const items = useMemo(
 		() =>
 			Object.entries(data)
-				.map(([key, entry]) => ({ key, displayJP: entry.displayJP ?? key }))
-				.sort((a, b) => a.displayJP.localeCompare(b.displayJP, "ja")),
+				.map(([key, entry]) => ({ key, displayJP: entry.displayJP ?? key })),
 		[data],
 	);
 
