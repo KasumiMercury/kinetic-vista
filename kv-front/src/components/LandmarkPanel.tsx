@@ -7,6 +7,7 @@ type LandmarkPanelProps = {
     selectedKeys: string[];
     onChange: (next: string[]) => void;
     color?: string;
+    remoteColorsByKey?: Record<string, string>;
 };
 
 type LocEntry = { displayJP?: string } & Record<string, unknown>;
@@ -17,6 +18,7 @@ export function LandmarkPanel({
     selectedKeys,
     onChange,
     color,
+    remoteColorsByKey,
 }: LandmarkPanelProps): JSX.Element {
 	const [isCollapsed, setIsCollapsed] = useState(true);
 	const data = loc as unknown as LocData;
@@ -28,13 +30,12 @@ export function LandmarkPanel({
 		[data],
 	);
 
-	const toggle = (key: string) => {
-		const isSelected = selectedKeys.includes(key);
-		const next = isSelected
-			? selectedKeys.filter((k) => k !== key)
-			: [...selectedKeys, key];
-		onChange(next);
-	};
+    // Single-select: selecting a key selects only that key; selecting it again clears selection
+    const toggle = (key: string) => {
+        const isSelected = selectedKeys.includes(key);
+        const next = isSelected ? [] : [key];
+        onChange(next);
+    };
 
 	return (
 		<div className="fixed bottom-4 left-4 z-[10000] w-[280px] rounded-lg bg-black/70 text-white shadow-xl">
@@ -57,6 +58,7 @@ export function LandmarkPanel({
                         const bg = color ?? "#ff3366";
                         const border = lightenHex(bg, 0.3);
                         const shadow = hexToRgba(bg, 0.5);
+                        const remote = remoteColorsByKey?.[key];
                         return (
                             <button
                                 key={key}
@@ -71,7 +73,9 @@ export function LandmarkPanel({
                                 style={
                                     selected
                                         ? { backgroundColor: bg, borderColor: border, boxShadow: `0 0 8px ${shadow}` }
-                                        : undefined
+                                        : remote
+                                            ? { borderColor: lightenHex(remote, 0.3), boxShadow: `0 0 6px ${hexToRgba(remote, 0.4)}` }
+                                            : undefined
                                 }
                             >
                                 {displayJP}

@@ -9,6 +9,7 @@ type LandmarkDirectionPanelProps = {
     scale?: { sx: number; sz: number };
     yawRad?: number;
     color?: string;
+    colorsByKey?: Record<string, string>;
 };
 
 const PANEL_HEIGHT = 60;
@@ -24,6 +25,7 @@ export function LandmarkDirectionPanel({
     scale = { sx: 1, sz: 1 },
     yawRad = 0,
     color,
+    colorsByKey,
 }: LandmarkDirectionPanelProps) {
     const markerColor = color ?? DEFAULT_COLOR;
 	const landmarkAngles = useMemo(
@@ -107,9 +109,9 @@ export function LandmarkDirectionPanel({
                 )}
 
 				{/* Landmarkマーカー */}
-				{visibleLandmarks.map((landmark) => (
-					<div
-						key={landmark.key}
+                {visibleLandmarks.map((landmark) => (
+                    <div
+                        key={landmark.key}
                         className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full ${
                             landmark.isSelected
                                 ? "border-2"
@@ -119,9 +121,9 @@ export function LandmarkDirectionPanel({
                             left: `${landmark.positionPercent}%`,
                             width: `${landmark.isSelected ? MARKER_SIZE_SELECTED : MARKER_SIZE_NORMAL}px`,
                             height: `${landmark.isSelected ? MARKER_SIZE_SELECTED : MARKER_SIZE_NORMAL}px`,
-                            backgroundColor: landmark.isSelected ? markerColor : "transparent",
-                            borderColor: landmark.isSelected ? lightenHex(markerColor, 0.3) : "black",
-                            boxShadow: landmark.isSelected ? `0 0 8px ${hexToRgba(markerColor, 0.5)}` : undefined,
+                            backgroundColor: landmark.isSelected ? (colorsByKey?.[landmark.key] ?? markerColor) : "transparent",
+                            borderColor: landmark.isSelected ? lightenHex(colorsByKey?.[landmark.key] ?? markerColor, 0.3) : "black",
+                            boxShadow: landmark.isSelected ? `0 0 8px ${hexToRgba(colorsByKey?.[landmark.key] ?? markerColor, 0.5)}` : undefined,
                         }}
                         title={`${landmark.displayJP} (${Math.round(landmark.relativeAngle)}°)`}
                     >

@@ -4,6 +4,21 @@ import type { UserIdentity } from "./userIdentity";
 
 type ConnectionState = "idle" | "connecting" | "connected" | "failed";
 
+export type SelectionEvent = {
+  type: "selection";
+  userId: string;
+  landmarkKey: string;
+  color: string;
+};
+
+type SelectionHandler = (e: SelectionEvent) => void;
+const selectionHandlers: Set<SelectionHandler> = new Set();
+
+export function subscribeSelection(handler: SelectionHandler): () => void {
+  selectionHandlers.add(handler);
+  return () => selectionHandlers.delete(handler);
+}
+
 let state: ConnectionState = "idle"; // persists for page lifetime (module scope)
 let ws: WebSocket | null = null;
 
@@ -50,8 +65,22 @@ export function connectOnce(identity: UserIdentity): void {
       console.info("[ws] connected:", url, `userId=${identity.userId} color=${identity.color}`);
     };
     ws.onmessage = (ev) => {
-      // Future: handle broadcast selections from others
-      // console.debug("[ws] message:", ev.data);
+      try {
+        const data = JSON.parse(ev.data as string);
+        if (data && data.type === "selection" && data.landmarkKey && data.userId) {
+          const evt: SelectionEvent = {
+            type: "selection",
+            userId: String(data.userId),
+            landmarkKey: String(data.landmarkKey),
+            color: typeof data.color === "string" ? data.color : "#FF3366",
+          };
+          selectionHandlers.forEach((h) => {
+            try { h(evt); } catch {}
+          });
+        }
+      } catch {
+        // ignore non-JSON
+      }
     };
     ws.onerror = (ev) => {
       console.warn("[ws] error:", ev);
@@ -69,9 +98,9 @@ export function connectOnce(identity: UserIdentity): void {
   }
 }
 
-export function sendSelection(userId: string, landmarkId: string): void {
+export function sendSelection(userId: string, landmarkKey: string): void {
   if (state !== "connected" || !ws) return;
-  const payload = { type: "select", userId, landmarkId };
+  const payload = { type: "select", userId, landmarkKey };
   try {
     ws.send(JSON.stringify(payload));
   } catch (e) {

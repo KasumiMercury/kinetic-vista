@@ -23,6 +23,7 @@ type SceneProps = {
     timeOverride?: number | null;
     selectedLandmarks?: string[];
     markerColor?: string;
+    colorsByKey?: Record<string, string>;
 };
 
 export function Scene({
@@ -33,6 +34,7 @@ export function Scene({
     timeOverride,
     selectedLandmarks,
     markerColor,
+    colorsByKey,
 }: SceneProps) {
 	const { ACTION } = CameraControlsImpl;
 	const controlsRef = useRef<CameraControlsImpl>(null);
@@ -180,6 +182,7 @@ export function Scene({
 
             <OctahedronMarkers
                 color={markerColor ?? "#ff3366"}
+                colorsByKey={colorsByKey}
                 coordMap={{ xKey: "x", zKey: "y", invertZ: true }}
                 height={0.1}
                 spinSpeed={markerSpinSpeed}

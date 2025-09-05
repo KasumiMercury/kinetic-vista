@@ -10,7 +10,7 @@ import { useDebug } from "./hooks/useDebug";
 import { OptionPanel } from "./components/OptionPanel";
 import { LandmarkDirectionPanel } from "./components/LandmarkDirectionPanel";
 import { getOrCreateUserIdentity } from "./utils/userIdentity";
-import { connectOnce, sendSelection } from "./utils/wsClient";
+import { connectOnce, sendSelection, subscribeSelection } from "./utils/wsClient";
 
 // Lazy-load debug-only panels so they are not bundled unless needed
 const CameraControlsPanel = lazy(() =>
@@ -31,6 +31,7 @@ function App() {
 	const [useManualRotation, setUseManualRotation] = useState(false); // 手動制御モード
     const [selectedLandmarks, setSelectedLandmarks] = useState<string[]>([]); // 複数選択
     const [{ userId, color }] = useState(() => getOrCreateUserIdentity());
+    const [remoteSelections, setRemoteSelections] = useState<Record<string, { userId: string; color: string; ts: number }>>({});
 
 	// Debug flag (enabled via ?debug, #debug, or localStorage)
 	const debug = useDebug();
@@ -85,6 +86,18 @@ function App() {
         }
     }, [userId, color]);
 
+    // Subscribe to selection broadcasts from other users
+    useEffect(() => {
+        const unsub = subscribeSelection((evt) => {
+            // Update last-writer-wins per landmark
+            setRemoteSelections((prev) => ({
+                ...prev,
+                [evt.landmarkKey]: { userId: evt.userId, color: evt.color, ts: Date.now() },
+            }));
+        });
+        return () => unsub();
+    }, []);
+
     const handleLandmarkChange = (next: string[]) => {
         // Detect newly added selection and send to server
         const added = next.find((k) => !selectedLandmarks.includes(k));
@@ -93,6 +106,17 @@ function App() {
         }
         setSelectedLandmarks(next);
     };
+
+    // Derive union of selected landmarks (local + remote) for display panels
+    const displaySelectedKeys = Array.from(
+        new Set([...selectedLandmarks, ...Object.keys(remoteSelections)])
+    );
+    // Per-key color with priority: mine overrides remote if I selected it
+    const colorsByKey = displaySelectedKeys.reduce<Record<string, string>>((acc, key) => {
+        if (selectedLandmarks.includes(key)) acc[key] = color; // my color wins
+        else acc[key] = remoteSelections[key]?.color ?? color;
+        return acc;
+    }, {});
 
     return (
         <div className="relative w-screen h-screen">
@@ -162,8 +186,9 @@ function App() {
 			{/* Landmark方向表示パネル（画面上部・最前面） */}
             <LandmarkDirectionPanel
                 cameraRotation={useManualRotation ? rotation : smoothRotation}
-                selectedLandmarks={selectedLandmarks}
+                selectedLandmarks={displaySelectedKeys}
                 color={color}
+                colorsByKey={colorsByKey}
                 coordMap={{ xKey: "x", zKey: "y", invertZ: true }}
             />
 
@@ -172,6 +197,7 @@ function App() {
                 selectedKeys={selectedLandmarks}
                 onChange={handleLandmarkChange}
                 color={color}
+                remoteColorsByKey={colorsByKey}
             />
 
             <Canvas shadows>
@@ -180,8 +206,9 @@ function App() {
                     useCameraControls={useCameraControls}
                     onRotationChange={setRotation}
                     timeOverride={timeOverride}
-                    selectedLandmarks={selectedLandmarks}
+                    selectedLandmarks={displaySelectedKeys}
                     markerColor={color}
+                    colorsByKey={colorsByKey}
                 />
             </Canvas>
         </div>
