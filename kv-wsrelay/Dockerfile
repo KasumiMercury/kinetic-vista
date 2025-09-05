@@ -28,7 +28,7 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o kv-wsrelay
 
-FROM alpine:3.20 as production
+FROM alpine:3.22 as production
 WORKDIR /app
 COPY --from=builder /app/kv-wsrelay /usr/local/bin/kv-wsrelay
 EXPOSE 8080
