@@ -70,7 +70,7 @@ export function LandmarkPanel({
 										selected
 											? "border"
 											: remote
-												? "border"
+												? "border-[3px]"
 												: "border border-white/25 bg-white/10"
 									}`}
 									style={

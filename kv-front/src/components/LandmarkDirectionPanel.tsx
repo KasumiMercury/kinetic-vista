@@ -150,8 +150,8 @@ export function LandmarkDirectionPanel({
 							}}
 							title={`${landmark.displayJP} (${Math.round(landmark.relativeAngle)}°)`}
 						>
-							{/* 選択中landmarkまたは最も近いlandmarkの名前表示 */}
-							{(landmark.isSelected ||
+							{/* 自分の選択、または最も近いlandmarkのみ名前表示（他ユーザ選択は非表示） */}
+							{((landmark.isSelected && isMine) ||
 								(nearestLandmark && landmark.key === nearestLandmark.key)) && (
 								<div className="absolute left-1/2 top-full -translate-x-1/2 whitespace-nowrap text-base font-medium text-neutral-800 [text-shadow:0_1px_2px_rgba(255,255,255,0.8)]">
 									{landmark.displayJP}
