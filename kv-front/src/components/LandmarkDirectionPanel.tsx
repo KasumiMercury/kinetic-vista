@@ -58,9 +58,10 @@ export function LandmarkDirectionPanel({
 			}));
 	}, [landmarkAngles]);
 
-	// 最も近いlandmarkを計算（選択されているものがない場合のみ）
+	// 最も近いlandmarkを計算（自分が選択していない場合のみ）
 	const nearestLandmark = useMemo(() => {
-		if (selectedLandmarks.length > 0) return null;
+		// 他ユーザの選択は無視し、自分の選択があるときだけ抑制する
+		if (mySelectedKeys.length > 0) return null;
 
 		return visibleLandmarks.reduce(
 			(nearest, current) => {
@@ -71,7 +72,7 @@ export function LandmarkDirectionPanel({
 			},
 			null as (typeof visibleLandmarks)[0] | null,
 		);
-	}, [visibleLandmarks, selectedLandmarks]);
+	}, [visibleLandmarks, mySelectedKeys]);
 
 	// 表示範囲外の選択中landmarkを検出
 	const outOfRangeLandmarks = useMemo(() => {
