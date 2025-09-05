@@ -1,6 +1,7 @@
 import type { JSX } from "react";
 import { useMemo, useState } from "react";
 import loc from "../assets/landmark.json";
+import { lightenHex, hexToRgba } from "../utils/userColor";
 
 type LandmarkPanelProps = {
     selectedKeys: string[];
@@ -11,7 +12,6 @@ type LandmarkPanelProps = {
 type LocEntry = { displayJP?: string } & Record<string, unknown>;
 type LocData = Record<string, LocEntry>;
 
-import { lightenHex, hexToRgba } from "../utils/userColor";
 
 export function LandmarkPanel({
     selectedKeys,

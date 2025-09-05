@@ -10,6 +10,7 @@ import { useDebug } from "./hooks/useDebug";
 import { OptionPanel } from "./components/OptionPanel";
 import { LandmarkDirectionPanel } from "./components/LandmarkDirectionPanel";
 import { getOrCreateUserIdentity } from "./utils/userIdentity";
+import { connectOnce, sendSelection } from "./utils/wsClient";
 
 // Lazy-load debug-only panels so they are not bundled unless needed
 const CameraControlsPanel = lazy(() =>
@@ -29,7 +30,7 @@ function App() {
 	const [timeOverride, setTimeOverride] = useState<number | null>(null); // 時刻オーバーライド (0-23時間)
 	const [useManualRotation, setUseManualRotation] = useState(false); // 手動制御モード
     const [selectedLandmarks, setSelectedLandmarks] = useState<string[]>([]); // 複数選択
-    const [{ userId, color }, setIdentity] = useState(() => getOrCreateUserIdentity());
+    const [{ userId, color }] = useState(() => getOrCreateUserIdentity());
 
 	// Debug flag (enabled via ?debug, #debug, or localStorage)
 	const debug = useDebug();
@@ -65,10 +66,28 @@ function App() {
 	]);
 
 	// 滑らかな補間を適用
-	const smoothRotation = useSmoothRotation(rotation, {
-		interpolationSpeed: 0.15, // 少し早めの補間速度
-		threshold: 0.05, // 小さな変化も検出
-	});
+    const smoothRotation = useSmoothRotation(rotation, {
+        interpolationSpeed: 0.15, // 少し早めの補間速度
+        threshold: 0.05, // 小さな変化も検出
+    });
+
+    // One-shot WebSocket connection attempt
+    useEffect(() => {
+        try {
+            connectOnce({ userId, color });
+        } catch (e) {
+            console.warn("[ws] connect attempt failed:", e);
+        }
+    }, [userId, color]);
+
+    const handleLandmarkChange = (next: string[]) => {
+        // Detect newly added selection and send to server
+        const added = next.find((k) => !selectedLandmarks.includes(k));
+        if (added) {
+            sendSelection(userId, added);
+        }
+        setSelectedLandmarks(next);
+    };
 
     return (
         <div className="relative w-screen h-screen">
@@ -146,7 +165,7 @@ function App() {
 			{/* Landmark 選択パネル（左下・最前面） */}
             <LandmarkPanel
                 selectedKeys={selectedLandmarks}
-                onChange={setSelectedLandmarks}
+                onChange={handleLandmarkChange}
                 color={color}
             />
 
