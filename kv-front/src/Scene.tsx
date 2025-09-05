@@ -20,19 +20,19 @@ import {
 } from "./utils/solarPosition";
 
 type SceneProps = {
-  rotation: number;
-  useCameraControls: boolean;
-  compassOffset?: number;
-  timeOverride?: number | null;
-  selectedLandmarks?: string[];
+	rotation: number;
+	useCameraControls: boolean;
+	compassOffset?: number;
+	timeOverride?: number | null;
+	selectedLandmarks?: string[];
 };
 
 export function Scene({
-  rotation,
-  useCameraControls,
-  compassOffset = 0,
-  timeOverride,
-  selectedLandmarks,
+	rotation,
+	useCameraControls,
+	compassOffset = 0,
+	timeOverride,
+	selectedLandmarks,
 }: SceneProps) {
 	const { ACTION } = CameraControlsImpl;
 	const controlsRef = useRef<CameraControlsImpl>(null);
@@ -115,8 +115,8 @@ export function Scene({
 				radius={0.2}
 				color="#ff3366"
 				coordMap={{ xKey: "x", zKey: "y", invertZ: true }}
-                height={10}
-                selectedKeys={selectedLandmarks}
+				height={10}
+				selectedKeys={selectedLandmarks}
 			/>
 
 			{/*<WaveWireframeMesh*/}
@@ -147,7 +147,7 @@ export function Scene({
 				densityFalloff={3}
 				gridDivisions={9}
 				maxConnections={3}
-				connectionUpdateInterval={10}
+				connectionUpdateInterval={5}
 				timeScale={24}
 			/>
 
