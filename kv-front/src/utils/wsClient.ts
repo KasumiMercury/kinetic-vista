@@ -4,12 +4,9 @@ import type { UserIdentity } from "./userIdentity";
 
 type ConnectionState = "idle" | "connecting" | "connected" | "failed";
 
-export type SelectionEvent = {
-  type: "selection";
-  userId: string;
-  landmarkKey: string;
-  color: string;
-};
+export type SelectionEvent =
+  | { type: "selection"; userId: string; landmarkKey: string; color: string }
+  | { type: "deselection"; userId: string; landmarkKey: string; color?: string };
 
 type SelectionHandler = (e: SelectionEvent) => void;
 const selectionHandlers: Set<SelectionHandler> = new Set();
@@ -67,16 +64,23 @@ export function connectOnce(identity: UserIdentity): void {
     ws.onmessage = (ev) => {
       try {
         const data = JSON.parse(ev.data as string);
-        if (data && data.type === "selection" && data.landmarkKey && data.userId) {
-          const evt: SelectionEvent = {
-            type: "selection",
-            userId: String(data.userId),
-            landmarkKey: String(data.landmarkKey),
-            color: typeof data.color === "string" ? data.color : "#FF3366",
-          };
-          selectionHandlers.forEach((h) => {
-            try { h(evt); } catch {}
-          });
+        if (data && data.landmarkKey && data.userId && (data.type === "selection" || data.type === "deselection")) {
+          if (data.type === "selection") {
+            const evt: SelectionEvent = {
+              type: "selection",
+              userId: String(data.userId),
+              landmarkKey: String(data.landmarkKey),
+              color: typeof data.color === "string" ? data.color : "#FF3366",
+            };
+            selectionHandlers.forEach((h) => { try { h(evt); } catch {} });
+          } else {
+            const evt: SelectionEvent = {
+              type: "deselection",
+              userId: String(data.userId),
+              landmarkKey: String(data.landmarkKey),
+            };
+            selectionHandlers.forEach((h) => { try { h(evt); } catch {} });
+          }
         }
       } catch {
         // ignore non-JSON
@@ -101,6 +105,16 @@ export function connectOnce(identity: UserIdentity): void {
 export function sendSelection(userId: string, landmarkKey: string): void {
   if (state !== "connected" || !ws) return;
   const payload = { type: "select", userId, landmarkKey };
+  try {
+    ws.send(JSON.stringify(payload));
+  } catch (e) {
+    console.warn("[ws] send failed:", e);
+  }
+}
+
+export function sendDeselection(userId: string, landmarkKey: string): void {
+  if (state !== "connected" || !ws) return;
+  const payload = { type: "deselect", userId, landmarkKey };
   try {
     ws.send(JSON.stringify(payload));
   } catch (e) {

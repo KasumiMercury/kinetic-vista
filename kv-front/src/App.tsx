@@ -10,7 +10,7 @@ import { useDebug } from "./hooks/useDebug";
 import { OptionPanel } from "./components/OptionPanel";
 import { LandmarkDirectionPanel } from "./components/LandmarkDirectionPanel";
 import { getOrCreateUserIdentity } from "./utils/userIdentity";
-import { connectOnce, sendSelection, subscribeSelection } from "./utils/wsClient";
+import { connectOnce, sendSelection, sendDeselection, subscribeSelection } from "./utils/wsClient";
 
 // Lazy-load debug-only panels so they are not bundled unless needed
 const CameraControlsPanel = lazy(() =>
@@ -89,20 +89,37 @@ function App() {
     // Subscribe to selection broadcasts from other users
     useEffect(() => {
         const unsub = subscribeSelection((evt) => {
-            // Update last-writer-wins per landmark
-            setRemoteSelections((prev) => ({
-                ...prev,
-                [evt.landmarkKey]: { userId: evt.userId, color: evt.color, ts: Date.now() },
-            }));
+            if (evt.type === "selection") {
+                setRemoteSelections((prev) => ({
+                    ...prev,
+                    [evt.landmarkKey]: { userId: evt.userId, color: evt.color, ts: Date.now() },
+                }));
+            } else {
+                // deselection: only clear if current owner matches this user
+                setRemoteSelections((prev) => {
+                    const cur = prev[evt.landmarkKey];
+                    if (cur && cur.userId === evt.userId) {
+                        const { [evt.landmarkKey]: _omit, ...rest } = prev;
+                        return rest;
+                    }
+                    return prev;
+                });
+            }
         });
         return () => unsub();
     }, []);
 
     const handleLandmarkChange = (next: string[]) => {
-        // Detect newly added selection and send to server
-        const added = next.find((k) => !selectedLandmarks.includes(k));
-        if (added) {
-            sendSelection(userId, added);
+        const prev = selectedLandmarks[0];
+        const curr = next[0];
+        if (prev && prev !== curr) {
+            sendDeselection(userId, prev);
+        }
+        if (curr && curr !== prev) {
+            sendSelection(userId, curr);
+        }
+        if (!curr && prev) {
+            sendDeselection(userId, prev);
         }
         setSelectedLandmarks(next);
     };
