@@ -39,6 +39,17 @@ type SelectionBroadcast struct {
 	Color       string `json:"color"`
 }
 
+type SnapshotSelection struct {
+	UserID      string `json:"userId"`
+	LandmarkKey string `json:"landmarkKey"`
+	Color       string `json:"color"`
+}
+
+type SnapshotMessage struct {
+	Type       string              `json:"type"`
+	Selections []SnapshotSelection `json:"selections"`
+}
+
 // Client represents a connected user
 type Client struct {
 	id    string
@@ -326,6 +337,29 @@ func wsHandler(h *Hub) gin.HandlerFunc {
 		welcome := WelcomeMessage{Type: "welcome", UserID: uid, Color: color}
 		if payload, err := json.Marshal(welcome); err == nil {
 			client.send <- payload
+		}
+
+		// Send snapshot of current selections to this client
+		// Gather all active users' selections
+		if members, err := rc.SMembers(ctx, "kv:active_users").Result(); err == nil {
+			selections := make([]SnapshotSelection, 0, len(members))
+			for _, m := range members {
+				k := fmt.Sprintf("kv:users:%s", m)
+				vals, err := rc.HGetAll(ctx, k).Result()
+				if err != nil || len(vals) == 0 {
+					continue
+				}
+				lk := strings.TrimSpace(vals["landmarkKey"])
+				col := strings.TrimSpace(vals["color"])
+				if lk == "" || col == "" {
+					continue
+				}
+				selections = append(selections, SnapshotSelection{UserID: m, LandmarkKey: lk, Color: col})
+			}
+			snap := SnapshotMessage{Type: "snapshot", Selections: selections}
+			if payload, err := json.Marshal(snap); err == nil {
+				client.send <- payload
+			}
 		}
 
 		// Start writer and reader goroutines
