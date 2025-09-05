@@ -46,7 +46,7 @@ interface OrientationData {
 	gamma: number | null;
 }
 
-interface SensorInfo {
+export interface SensorInfo {
 	sensorType: SensorType;
 	permissionState: PermissionState;
 	compassHeading: number | null;
