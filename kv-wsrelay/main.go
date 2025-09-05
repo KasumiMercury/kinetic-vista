@@ -27,16 +27,16 @@ type WelcomeMessage struct {
 }
 
 type IncomingMessage struct {
-	Type       string `json:"type"`
-	UserID     string `json:"userId"`
-	LandmarkID string `json:"landmarkId"`
+	Type        string `json:"type"`
+	UserID      string `json:"userId"`
+	LandmarkKey string `json:"landmarkKey"`
 }
 
 type SelectionBroadcast struct {
-	Type       string `json:"type"`
-	UserID     string `json:"userId"`
-	LandmarkID string `json:"landmarkId"`
-	Color      string `json:"color"`
+	Type        string `json:"type"`
+	UserID      string `json:"userId"`
+	LandmarkKey string `json:"landmarkKey"`
+	Color       string `json:"color"`
 }
 
 // Client represents a connected user
@@ -375,17 +375,22 @@ func reader(h *Hub, c *Client) {
 			ctx := context.Background()
 			rc := redisClient()
 			key := fmt.Sprintf("kv:users:%s", c.id)
+			lk := strings.TrimSpace(in.LandmarkKey)
+			if lk == "" {
+				// ignore empty selection
+				continue
+			}
 			if err := rc.HSet(ctx, key, map[string]interface{}{
-				"landmarkId":  in.LandmarkID,
+				"landmarkKey": lk,
 				"lastUpdated": time.Now().Unix(),
 			}).Err(); err != nil {
 				warnf("redis HSet selection error: %v", err)
 			}
 			out := SelectionBroadcast{
-				Type:       "selection",
-				UserID:     c.id, // enforce server-assigned id
-				LandmarkID: in.LandmarkID,
-				Color:      c.color,
+				Type:        "selection",
+				UserID:      c.id, // enforce server-assigned id
+				LandmarkKey: lk,
+				Color:       c.color,
 			}
 			if payload, err := json.Marshal(out); err == nil {
 				h.broadcast <- broadcastItem{sender: c, payload: payload}
