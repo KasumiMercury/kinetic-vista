@@ -3,16 +3,20 @@ import { useMemo, useState } from "react";
 import loc from "../assets/landmark.json";
 
 type LandmarkPanelProps = {
-	selectedKeys: string[];
-	onChange: (next: string[]) => void;
+    selectedKeys: string[];
+    onChange: (next: string[]) => void;
+    color?: string;
 };
 
 type LocEntry = { displayJP?: string } & Record<string, unknown>;
 type LocData = Record<string, LocEntry>;
 
+import { lightenHex, hexToRgba } from "../utils/userColor";
+
 export function LandmarkPanel({
-	selectedKeys,
-	onChange,
+    selectedKeys,
+    onChange,
+    color,
 }: LandmarkPanelProps): JSX.Element {
 	const [isCollapsed, setIsCollapsed] = useState(true);
 	const data = loc as unknown as LocData;
@@ -50,22 +54,30 @@ export function LandmarkPanel({
 					<div className="grid gap-2">
 						{items.map(({ key, displayJP }) => {
 							const selected = selectedKeys.includes(key);
-							return (
-								<button
-									key={key}
-									type="button"
-									onClick={() => toggle(key)}
-									aria-pressed={selected}
-									className={`w-full cursor-pointer rounded-lg px-2.5 py-2 text-left text-[13px] leading-[1.2] text-white ${
-										selected
-											? "border border-pink-300 bg-pink-600"
-											: "border border-white/25 bg-white/10"
-									}`}
-								>
-									{displayJP}
-								</button>
-							);
-						})}
+                        const bg = color ?? "#ff3366";
+                        const border = lightenHex(bg, 0.3);
+                        const shadow = hexToRgba(bg, 0.5);
+                        return (
+                            <button
+                                key={key}
+                                type="button"
+                                onClick={() => toggle(key)}
+                                aria-pressed={selected}
+                                className={`w-full cursor-pointer rounded-lg px-2.5 py-2 text-left text-[13px] leading-[1.2] text-white ${
+                                    selected
+                                        ? "border"
+                                        : "border border-white/25 bg-white/10"
+                                }`}
+                                style={
+                                    selected
+                                        ? { backgroundColor: bg, borderColor: border, boxShadow: `0 0 8px ${shadow}` }
+                                        : undefined
+                                }
+                            >
+                                {displayJP}
+                            </button>
+                        );
+                    })}
 					</div>
 				</div>
 			)}
