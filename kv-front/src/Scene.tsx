@@ -147,7 +147,7 @@ export function Scene({
 				densityFalloff={3}
 				gridDivisions={9}
 				maxConnections={3}
-				connectionUpdateInterval={5}
+				connectionUpdateInterval={2}
 				timeScale={24}
 			/>
 
