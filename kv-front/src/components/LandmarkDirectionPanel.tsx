@@ -50,6 +50,18 @@ export function LandmarkDirectionPanel({
 			}));
 	}, [landmarkAngles]);
 
+	// 最も近いlandmarkを計算（選択されているものがない場合のみ）
+	const nearestLandmark = useMemo(() => {
+		if (selectedLandmarks.length > 0) return null;
+		
+		return visibleLandmarks.reduce((nearest, current) => {
+			if (!nearest) return current;
+			return Math.abs(current.relativeAngle) < Math.abs(nearest.relativeAngle) 
+				? current 
+				: nearest;
+		}, null as typeof visibleLandmarks[0] | null);
+	}, [visibleLandmarks, selectedLandmarks]);
+
 	return (
 		<div className="fixed left-1/2 top-0 z-50 w-full max-w-[800px] -translate-x-1/2 px-4">
 			<div
@@ -66,7 +78,7 @@ export function LandmarkDirectionPanel({
 						className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full ${
 							landmark.isSelected
 								? "border-2 border-pink-300 bg-pink-600 shadow-[0_0_8px_rgba(255,51,102,0.5)]"
-								: "border-2 border-pink-600 bg-transparent shadow-[0_1px_3px_rgba(0,0,0,0.2)]"
+								: "border border-black bg-transparent shadow-[0_1px_3px_rgba(0,0,0,0.2)]"
 						}`}
 						style={{
 							left: `${landmark.positionPercent}%`,
@@ -79,9 +91,10 @@ export function LandmarkDirectionPanel({
 						}}
 						title={`${landmark.displayJP} (${Math.round(landmark.relativeAngle)}°)`}
 					>
-						{/* 選択中landmarkの名前表示 */}
-						{landmark.isSelected && (
-							<div className="absolute left-1/2 top-full -translate-x-1/2 whitespace-nowrap text-[10px] font-medium text-neutral-800 [text-shadow:0_1px_2px_rgba(255,255,255,0.8)]">
+						{/* 選択中landmarkまたは最も近いlandmarkの名前表示 */}
+						{(landmark.isSelected || 
+						  (nearestLandmark && landmark.key === nearestLandmark.key)) && (
+							<div className="absolute left-1/2 top-full -translate-x-1/2 whitespace-nowrap text-base font-medium text-neutral-800 [text-shadow:0_1px_2px_rgba(255,255,255,0.8)]">
 								{landmark.displayJP}
 							</div>
 						)}
