@@ -395,6 +395,30 @@ func reader(h *Hub, c *Client) {
 			if payload, err := json.Marshal(out); err == nil {
 				h.broadcast <- broadcastItem{sender: c, payload: payload}
 			}
+		case "deselect", "deselection":
+			// Clear selection and broadcast deselection
+			ctx := context.Background()
+			rc := redisClient()
+			key := fmt.Sprintf("kv:users:%s", c.id)
+			lk := strings.TrimSpace(in.LandmarkKey)
+			// Clear the landmarkKey if matches or regardless (we store only one)
+			if err := rc.HDel(ctx, key, "landmarkKey").Err(); err != nil {
+				warnf("redis HDel deselection error: %v", err)
+			}
+			if err := rc.HSet(ctx, key, map[string]interface{}{
+				"lastUpdated": time.Now().Unix(),
+			}).Err(); err != nil {
+				warnf("redis HSet lastUpdated error: %v", err)
+			}
+			out := SelectionBroadcast{
+				Type:        "deselection",
+				UserID:      c.id,
+				LandmarkKey: lk,
+				Color:       c.color,
+			}
+			if payload, err := json.Marshal(out); err == nil {
+				h.broadcast <- broadcastItem{sender: c, payload: payload}
+			}
 		default:
 			// ignore unknown types
 		}
