@@ -126,12 +126,6 @@ export function LandmarkDirectionFullScreen({
 		<div className="absolute inset-0 flex flex-col items-center justify-center bg-white px-6 py-16 text-neutral-900">
 			<div className="flex w-full max-w-[1024px] flex-col gap-8">
 				<header className="text-center">
-					<div className="text-xs font-semibold uppercase tracking-[0.45em] text-neutral-500">
-						Direction
-					</div>
-					<div className="mt-2 text-4xl font-semibold text-neutral-900">
-						ランドマーク方角
-					</div>
 					<div className="mt-4 inline-flex items-center gap-2 rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white shadow">
 						<span className="text-xs uppercase tracking-[0.35em] text-white/80">
 							{headingInfo.short}
@@ -221,10 +215,6 @@ export function LandmarkDirectionFullScreen({
 							style={{ backgroundColor: markerColor }}
 						/>
 						<span>選択中ランドマーク</span>
-					</div>
-					<div className="flex items-center gap-2">
-						<div className="h-[1px] w-6 bg-neutral-300" />
-						<span>表示範囲 ±90°</span>
 					</div>
 				</div>
 			</div>
