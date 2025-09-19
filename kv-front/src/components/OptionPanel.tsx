@@ -12,17 +12,21 @@ interface OptionPanelProps {
 		| "needs-permission"
 		| "no-sensor";
 	onChange: (mode: "sensor" | "drag") => void;
+	isCompact?: boolean;
 }
 
 export function OptionPanel({
 	mode,
 	permissionState,
 	onChange,
+	isCompact = false,
 }: OptionPanelProps): JSX.Element {
 	const [isCollapsed, setIsCollapsed] = useState(true);
+	const positionClassName = isCompact ? "right-4 top-20" : "right-4 bottom-4";
+	const containerClassName = `fixed ${positionClassName} z-[10000] rounded-lg bg-black/70 text-white shadow-xl`;
 
 	return (
-		<div className="fixed bottom-4 right-4 z-[10000] rounded-lg bg-black/70 text-white shadow-xl">
+		<div className={containerClassName}>
 			{/* 設定ボタン（折りたたみ時） */}
 			{isCollapsed ? (
 				<button

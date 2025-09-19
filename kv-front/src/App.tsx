@@ -10,6 +10,7 @@ import { useDebug } from "./hooks/useDebug";
 import { OptionPanel } from "./components/OptionPanel";
 import { LandmarkDirectionPanel } from "./components/LandmarkDirectionPanel";
 import { getOrCreateUserIdentity } from "./utils/userIdentity";
+import { useMediaQuery } from "./hooks/useMediaQuery";
 import {
 	connectOnce,
 	sendSelection,
@@ -50,6 +51,7 @@ function App() {
 
 	// センサー機能
 	const [sensorInfo, requestPermission] = useOrientationSensor();
+	const isCompactLayout = useMediaQuery("(max-width: 768px)");
 
 	// 端末種別でデフォルト操作を切り替え（PC: ドラッグ / スマホ: センサー）
 	useEffect(() => {
@@ -188,8 +190,9 @@ function App() {
 				</Suspense>
 			)}
 
-			{/* オプション設定パネル（画面右下・最前面） */}
+			{/* オプション設定パネル（通常は右下、狭い画面では上部右側） */}
 			<OptionPanel
+				isCompact={isCompactLayout}
 				mode={useCameraControls ? "sensor" : "drag"}
 				permissionState={sensorInfo.permissionState}
 				onChange={async (mode) => {
