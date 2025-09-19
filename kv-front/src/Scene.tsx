@@ -4,6 +4,7 @@ import { useSmoothRotation } from "./hooks/useSmoothRotation";
 // import {Perf} from "r3f-perf";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { ParticleNetwork } from "./components/ParticleNetwork";
+import { SkyWireframeShell } from "./components/SkyWireframeShell";
 import { ResidentialPlane } from "./components/ResidentialPlane";
 // import {WaveWireframeMesh} from "./components/WaveWireframeMesh";
 import { AllModels, type ModelComponent } from "./model";
@@ -171,6 +172,16 @@ export function Scene({
 				rayleigh={skyParams.rayleigh}
 				mieCoefficient={skyParams.mieCoefficient}
 				mieDirectionalG={skyParams.mieDirectionalG}
+			/>
+
+			<SkyWireframeShell
+				radius={100}
+				widthSegments={30}
+				heightSegments={20}
+				wireframeOpacity={0.5}
+				wireframeThickness={1}
+				wireframeColor="#86bdd7"
+				shellOpacity={0.0}
 			/>
 
 			<Suspense fallback={null}>
