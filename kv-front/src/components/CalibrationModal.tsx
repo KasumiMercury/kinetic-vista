@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type JSX } from "react";
+import { useEffect, useId, useMemo, useState, type JSX } from "react";
 import type { CalibrationResult } from "../hooks/useNavigationState";
 
 type CalibrationModalProps = {
@@ -30,6 +30,7 @@ export function CalibrationModal({
 	const [status, setStatus] = useState<Status>("idle");
 	const [result, setResult] = useState<CalibrationResult | null>(null);
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const selectId = useId();
 
 	useEffect(() => {
 		if (!isOpen) return;
@@ -91,11 +92,11 @@ export function CalibrationModal({
 					選択したランドマークを正面に合わせた状態で「オフセット算出」を押すと、現在のセンサー値との差から補正値を計算します。
 				</p>
 				<div className="mt-4 space-y-2 text-sm">
-					<label className="block text-white/80" htmlFor="calibration-landmark-select">
+					<label className="block text-white/80" htmlFor={selectId}>
 						ランドマークを選択
 					</label>
 					<select
-						id="calibration-landmark-select"
+						id={selectId}
 						value={selectedKey}
 						onChange={(event) => setSelectedKey(event.target.value)}
 						className="w-full rounded-md border border-white/30 bg-black/40 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"

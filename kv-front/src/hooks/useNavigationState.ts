@@ -255,7 +255,6 @@ export function useNavigationState(): NavigationState {
 			sensorInfo.compassHeading,
 			sensorInfo.permissionState,
 			useManualRotation,
-			setRotation,
 		],
 	);
 
@@ -275,7 +274,6 @@ export function useNavigationState(): NavigationState {
 		useManualRotation,
 		sensorInfo.compassHeading,
 		sensorInfo.permissionState,
-		setRotation,
 	]);
 
 	return {
