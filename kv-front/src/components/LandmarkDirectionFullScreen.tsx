@@ -135,7 +135,9 @@ export function LandmarkDirectionFullScreen({
 					</div>
 				</header>
 
-				<div className={`relative rounded-3xl border border-neutral-200 bg-white shadow-[0_25px_70px_rgba(15,23,42,0.12)] ${interactive ? (isDragging ? "cursor-grabbing" : "cursor-grab") : ""}`}>
+				<div
+					className={`relative rounded-3xl border border-neutral-200 bg-white shadow-[0_25px_70px_rgba(15,23,42,0.12)] ${interactive ? (isDragging ? "cursor-grabbing" : "cursor-grab") : ""}`}
+				>
 					<div
 						ref={containerRef}
 						onPointerDown={handlePointerDown}
@@ -192,7 +194,8 @@ export function LandmarkDirectionFullScreen({
 									title={`${landmark.displayJP} (${Math.round(landmark.relativeAngle)}°)`}
 								>
 									{((landmark.isSelected && isMine) ||
-										(nearestLandmark && landmark.key === nearestLandmark.key)) && (
+										(nearestLandmark &&
+											landmark.key === nearestLandmark.key)) && (
 										<div className="absolute left-1/2 top-full mt-3 w-max -translate-x-1/2 text-center">
 											<div className="rounded-full bg-neutral-900/85 px-3 py-1 text-xs font-medium text-white shadow">
 												{landmark.displayJP}

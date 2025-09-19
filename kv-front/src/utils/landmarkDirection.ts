@@ -42,18 +42,22 @@ export function useLandmarkDirection({
 			.map((landmark) => ({
 				...landmark,
 				positionPercent:
-					((landmark.relativeAngle + viewAngleRange) / (viewAngleRange * 2)) * 100,
+					((landmark.relativeAngle + viewAngleRange) / (viewAngleRange * 2)) *
+					100,
 			}));
 	}, [landmarkAngles, viewAngleRange]);
 
 	const nearestLandmark = useMemo(() => {
 		if (mySelectedKeys.length > 0) return null;
-		return visibleLandmarks.reduce<VisibleLandmark | null>((nearest, current) => {
-			if (!nearest) return current;
-			return Math.abs(current.relativeAngle) < Math.abs(nearest.relativeAngle)
-				? current
-				: nearest;
-		}, null);
+		return visibleLandmarks.reduce<VisibleLandmark | null>(
+			(nearest, current) => {
+				if (!nearest) return current;
+				return Math.abs(current.relativeAngle) < Math.abs(nearest.relativeAngle)
+					? current
+					: nearest;
+			},
+			null,
+		);
 	}, [visibleLandmarks, mySelectedKeys]);
 
 	const outOfRangeLandmarks = useMemo(() => {

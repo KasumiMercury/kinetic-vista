@@ -19,7 +19,9 @@ interface OptionPanelProps {
 	onChange: (mode: "sensor" | "drag") => void;
 	isCompact?: boolean;
 	selectedLandmarkKey?: string | null;
-	onCalibrate: (landmarkKey: string) => CalibrationResult | Promise<CalibrationResult>;
+	onCalibrate: (
+		landmarkKey: string,
+	) => CalibrationResult | Promise<CalibrationResult>;
 	calibrationOffset: number;
 	calibratedLandmarkKey: string | null;
 	calibrationTimestamp: number | null;
@@ -113,7 +115,9 @@ export function OptionPanel({
 							onChange={onChange}
 						/>
 						<div className="mt-4 rounded-md border border-white/20 bg-white/5 p-3">
-							<div className="text-[13px] font-semibold">キャリブレーション</div>
+							<div className="text-[13px] font-semibold">
+								キャリブレーション
+							</div>
 							{calibratedLandmarkKey ? (
 								<div className="mt-1 space-y-1 text-[12px] text-white/70">
 									<div>ランドマーク: {currentLandmarkLabel}</div>

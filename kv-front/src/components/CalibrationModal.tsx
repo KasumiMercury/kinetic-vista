@@ -6,7 +6,9 @@ type CalibrationModalProps = {
 	onClose: () => void;
 	options: Array<{ key: string; label: string }>;
 	defaultSelectionKey: string | null;
-	onCalibrate: (landmarkKey: string) => CalibrationResult | Promise<CalibrationResult>;
+	onCalibrate: (
+		landmarkKey: string,
+	) => CalibrationResult | Promise<CalibrationResult>;
 };
 
 type Status = "idle" | "pending" | "success" | "error";
@@ -134,7 +136,9 @@ export function CalibrationModal({
 					</div>
 				)}
 				{status === "pending" && (
-					<div className="mt-4 text-xs text-white/60">オフセットを計算しています...</div>
+					<div className="mt-4 text-xs text-white/60">
+						オフセットを計算しています...
+					</div>
 				)}
 				{status === "error" && (
 					<div className="mt-4 rounded-md border border-red-500/60 bg-red-500/10 p-3 text-xs text-red-200">
