@@ -15,7 +15,7 @@
   },
   "routes": [
     {
-      "pattern": "kv-front.mercuryksm.net",
+      "pattern": "kv.mercuryksm.net",
       "custom_domain": true
     }
   ],
