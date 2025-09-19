@@ -49,12 +49,7 @@ function App() {
 					<div className="flex h-screen w-screen items-center justify-center bg-gradient-to-b from-neutral-900 via-neutral-950 to-black text-white">
 						<div className="flex w-[min(90vw,480px)] flex-col gap-6 rounded-2xl bg-black/70 p-8 text-center shadow-2xl">
 							<div className="space-y-2">
-								<h1 className="text-2xl font-semibold">
-									ナビゲーションモードを選択
-								</h1>
-								<p className="text-sm text-white/70">
-									軽量な簡易ナビゲーション、または3D表示による詳細ナビゲーションを選択できます。
-								</p>
+								<h1 className="text-2xl font-semibold">ナビゲーションモード</h1>
 							</div>
 							<div className="space-y-3">
 								<button
@@ -64,7 +59,7 @@ function App() {
 								>
 									簡易ナビゲーション
 									<span className="mt-1 block text-xs font-normal text-white/60">
-										ランドマーク一覧で方角を確認（準備中）
+										軽量なナビゲーションを行います
 									</span>
 								</button>
 								<button
@@ -75,11 +70,14 @@ function App() {
 									}}
 									onMouseEnter={() => void loadThreeNavigation()}
 									onFocus={() => void loadThreeNavigation()}
-									className="w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-semibold text-white shadow-lg transition-colors hover:bg-blue-500"
+									className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-medium text-white transition-colors hover:border-white/40 hover:bg-white/20"
 								>
 									3Dナビゲーション
-									<span className="mt-1 block text-xs font-normal text-blue-100/70">
-										three.jsを読み込んで3Dシーンを表示
+									<span className="mt-1 block text-xs font-normal text-white/60">
+										3D表示によるナビゲーションを行います
+									</span>
+									<span className="mt-1 block text-xs font-normal text-red-300/70">
+										データ通信量が多くなります
 									</span>
 								</button>
 							</div>
