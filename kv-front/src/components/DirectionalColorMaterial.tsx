@@ -1,4 +1,5 @@
-import { forwardRef } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
 interface DirectionalColorMaterialProps {
@@ -11,6 +12,9 @@ interface DirectionalColorMaterialProps {
 	negativeYColor?: string; // -Y軸方向の色
 	positiveZColor?: string; // +Z軸方向の色
 	negativeZColor?: string; // -Z軸方向の色
+	wireframe?: boolean; // ワイヤーフレームのオーバーレイを有効化
+	wireframeColor?: string; // ワイヤーフレームラインの色
+	wireframeOpacity?: number; // ワイヤーフレームラインの不透明度
 }
 
 export const DirectionalColorMaterial = forwardRef<
@@ -28,13 +32,148 @@ export const DirectionalColorMaterial = forwardRef<
 			negativeYColor = "#ffe16a",
 			positiveZColor = "#b678ff",
 			negativeZColor = "#3dd1ff",
+			wireframe = true,
+			wireframeColor = "#ffffff",
+			wireframeOpacity = 1,
 			...props
 		},
 		ref,
 	) => {
+		const { scene } = useThree();
+		const materialRef = useRef<THREE.MeshStandardMaterial | null>(null);
+		const wireframeSegmentsRef = useRef<THREE.LineSegments | null>(null);
+		const wireframeMeshRef = useRef<THREE.Mesh | null>(null);
+		const wireframeColorRef = useRef(wireframeColor);
+		const wireframeOpacityRef = useRef(wireframeOpacity);
+
+		useImperativeHandle(ref, () => materialRef.current as THREE.MeshStandardMaterial);
+
+		const detachWireframe = useCallback(() => {
+			const segments = wireframeSegmentsRef.current;
+			const mesh = wireframeMeshRef.current;
+			if (!segments || !mesh) {
+				wireframeSegmentsRef.current = null;
+				wireframeMeshRef.current = null;
+				return;
+			}
+			mesh.remove(segments);
+			segments.geometry.dispose();
+			(segments.material as THREE.LineBasicMaterial).dispose();
+			wireframeSegmentsRef.current = null;
+			wireframeMeshRef.current = null;
+		}, []);
+
+		const attachWireframe = useCallback(
+			(mesh: THREE.Mesh) => {
+				detachWireframe();
+				const wireframeGeometry = new THREE.WireframeGeometry(mesh.geometry);
+				wireframeGeometry.userData.sourceGeometryUuid = mesh.geometry.uuid;
+				const lineMaterial = new THREE.LineBasicMaterial({
+					color: new THREE.Color(wireframeColorRef.current),
+					transparent: wireframeOpacityRef.current < 1,
+					opacity: wireframeOpacityRef.current,
+				});
+				lineMaterial.depthTest = true;
+				lineMaterial.depthWrite = false;
+				lineMaterial.needsUpdate = true;
+				const segments = new THREE.LineSegments(wireframeGeometry, lineMaterial);
+				segments.renderOrder = mesh.renderOrder + 1;
+				mesh.add(segments);
+				wireframeSegmentsRef.current = segments;
+				wireframeMeshRef.current = mesh;
+			},
+			[detachWireframe],
+		);
+
+		const findMeshForMaterial = useCallback(
+			(material: THREE.Material) => {
+				let targetMesh: THREE.Mesh | null = null;
+				scene.traverse((object) => {
+					if (targetMesh || !(object instanceof THREE.Mesh)) {
+						return;
+					}
+					const mesh = object as THREE.Mesh;
+					const materials = Array.isArray(mesh.material)
+						? mesh.material
+						: [mesh.material];
+					if (materials.includes(material)) {
+						targetMesh = mesh;
+					}
+				});
+				return targetMesh;
+			},
+			[scene],
+		);
+
+		useEffect(() => {
+			return () => {
+				detachWireframe();
+			};
+		}, [detachWireframe]);
+
+		useEffect(() => {
+			if (!wireframe) {
+				detachWireframe();
+			}
+		}, [wireframe, detachWireframe]);
+
+		useEffect(() => {
+			wireframeColorRef.current = wireframeColor;
+			const segments = wireframeSegmentsRef.current;
+			if (!segments) {
+				return;
+			}
+			const lineMaterial = segments.material as THREE.LineBasicMaterial;
+			lineMaterial.color.set(wireframeColor);
+			lineMaterial.needsUpdate = true;
+		}, [wireframeColor]);
+
+		useEffect(() => {
+			wireframeOpacityRef.current = wireframeOpacity;
+			const segments = wireframeSegmentsRef.current;
+			if (!segments) {
+				return;
+			}
+			const lineMaterial = segments.material as THREE.LineBasicMaterial;
+			lineMaterial.opacity = wireframeOpacity;
+			lineMaterial.transparent = wireframeOpacity < 1;
+			lineMaterial.needsUpdate = true;
+		}, [wireframeOpacity]);
+
+		useFrame(() => {
+			if (!wireframe) {
+				return;
+			}
+			const materialInstance = materialRef.current;
+			if (!materialInstance) {
+				return;
+			}
+			const existingMesh = wireframeMeshRef.current;
+			const existingSegments = wireframeSegmentsRef.current;
+			if (existingMesh && !existingMesh.parent) {
+				detachWireframe();
+			}
+			if (
+				existingMesh &&
+				existingSegments &&
+				existingSegments.geometry.userData?.sourceGeometryUuid !== existingMesh.geometry.uuid
+			) {
+				attachWireframe(existingMesh);
+				return;
+			}
+			if (wireframeSegmentsRef.current) {
+				return;
+			}
+			const mesh = findMeshForMaterial(materialInstance);
+			if (!mesh) {
+				return;
+			}
+			attachWireframe(mesh);
+		});
+
 		return (
 			<meshStandardMaterial
-				ref={ref}
+				ref={materialRef}
 				transparent={transparent}
 				opacity={opacity}
 				side={side}
