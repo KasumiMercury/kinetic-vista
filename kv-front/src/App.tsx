@@ -1,264 +1,90 @@
-import { Canvas } from "@react-three/fiber";
-import { useState, useEffect, lazy, Suspense } from "react";
-import { Scene } from "./Scene.tsx";
-import { useOrientationSensor } from "./hooks/useOrientationSensor";
-import { useSmoothRotation } from "./hooks/useSmoothRotation";
-import { LandmarkPanel } from "./components/LandmarkPanel";
-import { PermissionRequestOverlay } from "./components/PermissionRequestOverlay";
-import { PermissionDeniedOverlay } from "./components/PermissionDeniedOverlay";
-import { useDebug } from "./hooks/useDebug";
-import { OptionPanel } from "./components/OptionPanel";
-import { LandmarkDirectionPanel } from "./components/LandmarkDirectionPanel";
-import { getOrCreateUserIdentity } from "./utils/userIdentity";
-import { useMediaQuery } from "./hooks/useMediaQuery";
-import {
-	connectOnce,
-	sendSelection,
-	sendDeselection,
-	subscribeSelection,
-	subscribeWelcome,
-} from "./utils/wsClient";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import SimpleNavigationApp from "./SimpleNavigationApp";
 
-// Lazy-load debug-only panels so they are not bundled unless needed
-const CameraControlsPanel = lazy(() =>
-	import("./components/CameraControlsPanel").then((m) => ({
-		default: m.CameraControlsPanel,
-	})),
+type ThreeNavigationAppComponent = typeof import("./ThreeNavigationApp").default;
+
+const fallbackContent = (
+	<div className="flex h-screen w-screen items-center justify-center bg-gradient-to-b from-neutral-900 via-neutral-950 to-black text-white">
+		<div className="rounded-xl bg-black/70 px-6 py-4 text-sm text-white/80 shadow-xl">
+			3Dナビゲーションを読み込んでいます...
+		</div>
+	</div>
 );
-const SensorStatusPanel = lazy(() =>
-	import("./components/SensorStatusPanel").then((m) => ({
-		default: m.SensorStatusPanel,
-	})),
-);
+
+type ViewState = "selection" | "simple" | "three";
 
 function App() {
-	const [rotation, setRotation] = useState(0); // 度数で管理 (0-360°)
-	const [useCameraControls, setUseCameraControls] = useState(true);
-	const [timeOverride, setTimeOverride] = useState<number | null>(null); // 時刻オーバーライド (0-23時間)
-	const [useManualRotation, setUseManualRotation] = useState(false); // 手動制御モード
-	const [selectedLandmarks, setSelectedLandmarks] = useState<string[]>([]); // 複数選択
-	const [identity, setIdentity] = useState(() => getOrCreateUserIdentity());
-	const { userId, color } = identity;
-	const [remoteSelections, setRemoteSelections] = useState<
-		Record<string, { userId: string; color: string; ts: number }>
-	>({});
+	const [view, setView] = useState<ViewState>("selection");
+	const [ThreeNavComponent, setThreeNavComponent] =
+		useState<ThreeNavigationAppComponent | null>(null);
+	const [isLoadingThreeNav, setIsLoadingThreeNav] = useState(false);
 
-	// Debug flag (enabled via ?debug, #debug, or localStorage)
-	const debug = useDebug();
-
-	// 現在時刻を取得
-	const currentHour = new Date().getHours();
-
-	// センサー機能
-	const [sensorInfo, requestPermission] = useOrientationSensor();
-	const isCompactLayout = useMediaQuery("(max-width: 768px)");
-
-	// 端末種別でデフォルト操作を切り替え（PC: ドラッグ / スマホ: センサー）
-	useEffect(() => {
-		const ua = navigator.userAgent.toLowerCase();
-		const isMobile = /iphone|ipod|ipad|android/.test(ua);
-		setUseCameraControls(isMobile); // true: センサー, false: ドラッグ
-		// ドラッグ時は手動スライダーは使わない方針のため false に揃える
-		setUseManualRotation(false);
-	}, []);
-
-	// センサー値をrotationに反映
-	useEffect(() => {
-		if (
-			!useManualRotation &&
-			sensorInfo.compassHeading !== null &&
-			sensorInfo.permissionState === "granted"
-		) {
-			setRotation(sensorInfo.compassHeading);
-		}
-	}, [
-		sensorInfo.compassHeading,
-		useManualRotation,
-		sensorInfo.permissionState,
-	]);
-
-	// 滑らかな補間を適用
-	const smoothRotation = useSmoothRotation(rotation, {
-		interpolationSpeed: 0.15, // 少し早めの補間速度
-		threshold: 0.05, // 小さな変化も検出
-	});
-
-	// Log user identity (UUID + color)
-	useEffect(() => {
-		console.info(`[kv-front] userId=${userId} color=${color}`);
-	}, [userId, color]);
-
-	// One-shot WebSocket connection attempt
-	useEffect(() => {
+	const loadThreeNavigation = useCallback(async () => {
+		if (ThreeNavComponent || isLoadingThreeNav) return;
+		setIsLoadingThreeNav(true);
 		try {
-			connectOnce({ userId, color });
-		} catch (e) {
-			console.warn("[ws] connect attempt failed:", e);
+			const module = await import("./ThreeNavigationApp");
+			setThreeNavComponent(() => module.default);
+		} catch (error) {
+			console.error("Failed to load ThreeNavigationApp:", error);
+		} finally {
+			setIsLoadingThreeNav(false);
 		}
-	}, [userId, color]);
+	}, [ThreeNavComponent, isLoadingThreeNav]);
 
-	// Adopt server-assigned identity to ensure color matches across clients
 	useEffect(() => {
-		const unsub = subscribeWelcome((evt) => {
-			setIdentity({ userId: evt.userId, color: evt.color });
-		});
-		return () => unsub();
-	}, []);
+		if (view === "three") void loadThreeNavigation();
+	}, [view, loadThreeNavigation]);
 
-	// Subscribe to selection broadcasts from other users
-	useEffect(() => {
-		const unsub = subscribeSelection((evt) => {
-			if (evt.type === "selection") {
-				setRemoteSelections((prev) => ({
-					...prev,
-					[evt.landmarkKey]: {
-						userId: evt.userId,
-						color: evt.color,
-						ts: Date.now(),
-					},
-				}));
-			} else {
-				// deselection: only clear if current owner matches this user
-				setRemoteSelections((prev) => {
-					const cur = prev[evt.landmarkKey];
-					if (cur && cur.userId === evt.userId) {
-						const { [evt.landmarkKey]: _omit, ...rest } = prev;
-						return rest;
-					}
-					return prev;
-				});
-			}
-		});
-		return () => unsub();
-	}, []);
-
-	const handleLandmarkChange = (next: string[]) => {
-		const prev = selectedLandmarks[0];
-		const curr = next[0];
-		if (prev && prev !== curr) {
-			sendDeselection(userId, prev);
+	const content = useMemo(() => {
+		switch (view) {
+			case "simple":
+				return <SimpleNavigationApp onBack={() => setView("selection")} />;
+			case "three":
+				if (!ThreeNavComponent) return fallbackContent;
+				return (
+					<ThreeNavComponent onBack={() => setView("selection")} />
+				);
+			default:
+				return (
+					<div className="flex h-screen w-screen items-center justify-center bg-gradient-to-b from-neutral-900 via-neutral-950 to-black text-white">
+						<div className="flex w-[min(90vw,480px)] flex-col gap-6 rounded-2xl bg-black/70 p-8 text-center shadow-2xl">
+							<div className="space-y-2">
+								<h1 className="text-2xl font-semibold">ナビゲーションモードを選択</h1>
+								<p className="text-sm text-white/70">
+									軽量な簡易ナビゲーション、または3D表示による詳細ナビゲーションを選択できます。
+								</p>
+							</div>
+							<div className="space-y-3">
+								<button
+									type="button"
+									onClick={() => setView("simple")}
+									className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-base font-medium text-white transition-colors hover:border-white/40 hover:bg-white/20"
+								>
+									簡易ナビゲーション
+									<span className="mt-1 block text-xs font-normal text-white/60">ランドマーク一覧で方角を確認（準備中）</span>
+								</button>
+								<button
+									type="button"
+									onClick={() => {
+									setView("three");
+									void loadThreeNavigation();
+								}}
+									onMouseEnter={() => void loadThreeNavigation()}
+									onFocus={() => void loadThreeNavigation()}
+									className="w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-semibold text-white shadow-lg transition-colors hover:bg-blue-500"
+								>
+									3Dナビゲーション
+									<span className="mt-1 block text-xs font-normal text-blue-100/70">three.jsを読み込んで3Dシーンを表示</span>
+								</button>
+							</div>
+						</div>
+					</div>
+				);
 		}
-		if (curr && curr !== prev) {
-			sendSelection(userId, curr);
-		}
-		if (!curr && prev) {
-			sendDeselection(userId, prev);
-		}
-		setSelectedLandmarks(next);
-	};
+	}, [ThreeNavComponent, loadThreeNavigation, view]);
 
-	// Derive union of selected landmarks (local + remote) for display panels
-	const displaySelectedKeys = Array.from(
-		new Set([...selectedLandmarks, ...Object.keys(remoteSelections)]),
-	);
-	// Per-key color with priority: mine overrides remote if I selected it
-	const colorsByKey = displaySelectedKeys.reduce<Record<string, string>>(
-		(acc, key) => {
-			if (selectedLandmarks.includes(key))
-				acc[key] = color; // my color wins
-			else acc[key] = remoteSelections[key]?.color ?? color;
-			return acc;
-		},
-		{},
-	);
-
-	return (
-		<div className="relative w-screen h-screen">
-			{debug && (
-				<Suspense>
-					<CameraControlsPanel
-						useCameraControls={useCameraControls}
-						onUseCameraControlsChange={setUseCameraControls}
-						useManualRotation={useManualRotation}
-						onUseManualRotationChange={setUseManualRotation}
-						rotation={rotation}
-						onRotationChange={setRotation}
-						smoothRotation={smoothRotation}
-						timeOverride={timeOverride}
-						onTimeOverrideChange={setTimeOverride}
-						currentHour={currentHour}
-						isSensorActive={
-							!useManualRotation && sensorInfo.compassHeading !== null
-						}
-					/>
-				</Suspense>
-			)}
-
-			{debug && (
-				<Suspense>
-					<SensorStatusPanel sensorInfo={sensorInfo} />
-				</Suspense>
-			)}
-
-			{/* オプション設定パネル（通常は右下、狭い画面では上部右側） */}
-			<OptionPanel
-				isCompact={isCompactLayout}
-				mode={useCameraControls ? "sensor" : "drag"}
-				permissionState={sensorInfo.permissionState}
-				onChange={async (mode) => {
-					if (mode === "sensor") {
-						setUseCameraControls(true);
-						// センサー有効化時に必要権限を取得
-						await requestPermission();
-						setUseManualRotation(false);
-					} else {
-						setUseCameraControls(false);
-						setUseManualRotation(true);
-					}
-				}}
-			/>
-
-			{/* 権限取得ボタン（画面中央・最前面） */}
-			{useCameraControls &&
-				sensorInfo.permissionState === "needs-permission" && (
-					<PermissionRequestOverlay
-						sensorTypeLabel={
-							sensorInfo.sensorType === "absolute-orientation"
-								? "AbsoluteOrientationSensor"
-								: "DeviceOrientationEvent"
-						}
-						onRequestPermission={requestPermission}
-					/>
-				)}
-
-			{useCameraControls && sensorInfo.permissionState === "denied" && (
-				<PermissionDeniedOverlay
-					onTryAgain={requestPermission}
-					onUseManualControl={() => setUseManualRotation(true)}
-				/>
-			)}
-
-			{/* Landmark方向表示パネル（画面上部・最前面） */}
-			<LandmarkDirectionPanel
-				cameraRotation={useManualRotation ? rotation : smoothRotation}
-				selectedLandmarks={displaySelectedKeys}
-				mySelectedKeys={selectedLandmarks}
-				color={color}
-				colorsByKey={colorsByKey}
-				coordMap={{ xKey: "x", zKey: "y", invertZ: true }}
-			/>
-
-			{/* Landmark 選択パネル（左下・最前面） */}
-			<LandmarkPanel
-				selectedKeys={selectedLandmarks}
-				onChange={handleLandmarkChange}
-				color={color}
-				remoteColorsByKey={colorsByKey}
-			/>
-
-			<Canvas shadows>
-				<Scene
-					rotation={useManualRotation ? rotation : smoothRotation}
-					useCameraControls={useCameraControls}
-					onRotationChange={setRotation}
-					timeOverride={timeOverride}
-					selectedLandmarks={displaySelectedKeys}
-					markerColor={color}
-					colorsByKey={colorsByKey}
-				/>
-			</Canvas>
-		</div>
-	);
+	return content;
 }
 
 export default App;

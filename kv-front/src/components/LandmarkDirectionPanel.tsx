@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { getLandmarkAngles, type CoordMap } from "../utils/landmarkAngles";
+import { useLandmarkDirectionData } from "../hooks/useLandmarkDirectionData";
+import type { CoordMap } from "../utils/landmarkAngles";
 import { hexToRgba } from "../utils/userColor";
 
 type LandmarkDirectionPanelProps = {
@@ -17,7 +17,6 @@ const PANEL_HEIGHT = 60;
 const MARKER_SIZE_NORMAL = 8;
 const MARKER_SIZE_SELECTED = Math.round(MARKER_SIZE_NORMAL * 1.2);
 const DEFAULT_COLOR = "#ff3366";
-const VIEW_ANGLE_RANGE = 90; // 左右90度ずつ（計180度）の範囲を表示
 
 export function LandmarkDirectionPanel({
 	cameraRotation,
@@ -30,66 +29,19 @@ export function LandmarkDirectionPanel({
 	colorsByKey,
 }: LandmarkDirectionPanelProps) {
 	const markerColor = color ?? DEFAULT_COLOR;
-	const landmarkAngles = useMemo(
-		() =>
-			getLandmarkAngles(
-				cameraRotation,
-				selectedLandmarks,
-				coordMap,
-				scale,
-				yawRad,
-			),
-		[cameraRotation, selectedLandmarks, coordMap, scale, yawRad],
-	);
-
-	// 表示範囲内のlandmarkのみフィルタリングし、位置を計算
-	const visibleLandmarks = useMemo(() => {
-		return landmarkAngles
-			.filter(
-				(landmark) => Math.abs(landmark.relativeAngle) <= VIEW_ANGLE_RANGE,
-			)
-			.map((landmark) => ({
-				...landmark,
-				// 相対角度（-90〜90）を位置パーセント（0〜100）に変換
-				positionPercent:
-					((landmark.relativeAngle + VIEW_ANGLE_RANGE) /
-						(VIEW_ANGLE_RANGE * 2)) *
-					100,
-			}));
-	}, [landmarkAngles]);
-
-	// 最も近いlandmarkを計算（自分が選択していない場合のみ）
-	const nearestLandmark = useMemo(() => {
-		// 他ユーザの選択は無視し、自分の選択があるときだけ抑制する
-		if (mySelectedKeys.length > 0) return null;
-
-		return visibleLandmarks.reduce(
-			(nearest, current) => {
-				if (!nearest) return current;
-				return Math.abs(current.relativeAngle) < Math.abs(nearest.relativeAngle)
-					? current
-					: nearest;
-			},
-			null as (typeof visibleLandmarks)[0] | null,
-		);
-	}, [visibleLandmarks, mySelectedKeys]);
-
-	// 表示範囲外の選択中landmarkを検出
-	const outOfRangeLandmarks = useMemo(() => {
-		return landmarkAngles.filter(
-			(landmark) =>
-				landmark.isSelected &&
-				Math.abs(landmark.relativeAngle) > VIEW_ANGLE_RANGE,
-		);
-	}, [landmarkAngles]);
-
-	// 左端・右端インジケーター表示判定
-	const showLeftIndicator = outOfRangeLandmarks.some(
-		(landmark) => landmark.relativeAngle < -VIEW_ANGLE_RANGE,
-	);
-	const showRightIndicator = outOfRangeLandmarks.some(
-		(landmark) => landmark.relativeAngle > VIEW_ANGLE_RANGE,
-	);
+	const {
+		visibleLandmarks,
+		nearestLandmark,
+		showLeftIndicator,
+		showRightIndicator,
+	} = useLandmarkDirectionData({
+		cameraRotation,
+		selectedLandmarks,
+		mySelectedKeys,
+		coordMap,
+		scale,
+		yawRad,
+	});
 
 	return (
 		<div className="fixed left-1/2 top-0 z-50 w-full max-w-[800px] -translate-x-1/2 px-4">
