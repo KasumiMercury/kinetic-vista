@@ -45,6 +45,11 @@ function ThreeNavigationApp({ onBack }: ThreeNavigationAppProps) {
 		color,
 		displaySelectedKeys,
 		colorsByKey,
+		calibrationOffset,
+		calibratedLandmarkKey,
+		calibrationTimestamp,
+		calibrateWithLandmark,
+		resetCalibration,
 	} = useNavigationState();
 	const isCompactLayout = useMediaQuery("(max-width: 768px)");
 
@@ -90,6 +95,12 @@ function ThreeNavigationApp({ onBack }: ThreeNavigationAppProps) {
 				isCompact={isCompactLayout}
 				mode={useCameraControls ? "sensor" : "drag"}
 				permissionState={sensorInfo.permissionState}
+				selectedLandmarkKey={selectedLandmarks[0] ?? null}
+				onCalibrate={calibrateWithLandmark}
+				calibrationOffset={calibrationOffset}
+				calibratedLandmarkKey={calibratedLandmarkKey}
+				calibrationTimestamp={calibrationTimestamp}
+				onResetCalibration={resetCalibration}
 				onChange={async (mode) => {
 					if (mode === "sensor") {
 						setUseCameraControls(true);

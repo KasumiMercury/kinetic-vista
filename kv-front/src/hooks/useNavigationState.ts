@@ -17,8 +17,43 @@ import {
 	subscribeSelection,
 	subscribeWelcome,
 } from "../utils/wsClient";
+import landmarkData from "../assets/landmark.json";
+import {
+	calculateLandmarkAngle,
+	type LandmarkEntry,
+} from "../utils/landmarkAngles";
 
 export type RemoteSelection = { userId: string; color: string; ts: number };
+
+export type CalibrationResult =
+	| {
+				success: true;
+				offset: number;
+				actualAngle: number;
+				sensorHeading: number;
+				calibratedHeading: number;
+				landmarkKey: string;
+			}
+	| {
+				success: false;
+				reason: "sensor-unavailable" | "landmark-not-found";
+				landmarkKey: string;
+			};
+
+const LANDMARKS = landmarkData as Record<string, LandmarkEntry>;
+const CALIBRATION_COORD_MAP = { xKey: "x", zKey: "y", invertZ: true } as const;
+
+const normalizeAngle = (value: number): number => {
+	const normalized = value % 360;
+	return normalized < 0 ? normalized + 360 : normalized;
+};
+
+const shortestAngleDifference = (target: number, reference: number): number => {
+	let diff = target - reference;
+	while (diff > 180) diff -= 360;
+	while (diff < -180) diff += 360;
+	return diff;
+};
 
 type NavigationState = {
 	rotation: number;
@@ -40,6 +75,11 @@ type NavigationState = {
 	displaySelectedKeys: string[];
 	colorsByKey: Record<string, string>;
 	userId: string;
+	calibrationOffset: number;
+	calibratedLandmarkKey: string | null;
+	calibrationTimestamp: number | null;
+	calibrateWithLandmark: (landmarkKey: string) => CalibrationResult;
+	resetCalibration: () => void;
 };
 
 export function useNavigationState(): NavigationState {
@@ -51,6 +91,9 @@ export function useNavigationState(): NavigationState {
 	const [identity, setIdentity] = useState(() => getOrCreateUserIdentity());
 	const { userId, color } = identity;
 	const [remoteSelections, setRemoteSelections] = useState<Record<string, RemoteSelection>>({});
+	const [calibrationOffset, setCalibrationOffset] = useState(0);
+	const [calibratedLandmarkKey, setCalibratedLandmarkKey] = useState<string | null>(null);
+	const [calibrationTimestamp, setCalibrationTimestamp] = useState<number | null>(null);
 
 	const debug = useDebug();
 	const currentHour = new Date().getHours();
@@ -70,9 +113,17 @@ export function useNavigationState(): NavigationState {
 			sensorInfo.compassHeading !== null &&
 			sensorInfo.permissionState === "granted"
 		) {
-			setRotation(sensorInfo.compassHeading);
+			const adjusted = normalizeAngle(
+				sensorInfo.compassHeading + calibrationOffset,
+			);
+			setRotation(adjusted);
 		}
-	}, [sensorInfo.compassHeading, useManualRotation, sensorInfo.permissionState]);
+	}, [
+		sensorInfo.compassHeading,
+		useManualRotation,
+		sensorInfo.permissionState,
+		calibrationOffset,
+	]);
 
 	const smoothRotation = useSmoothRotation(rotation, {
 		interpolationSpeed: 0.15,
@@ -156,6 +207,77 @@ export function useNavigationState(): NavigationState {
 		}, {});
 	}, [displaySelectedKeys, selectedLandmarks, remoteSelections, color]);
 
+	const calibrateWithLandmark = useCallback(
+		(landmarkKey: string): CalibrationResult => {
+			const landmark = LANDMARKS[landmarkKey];
+			if (!landmark) {
+				return {
+					success: false,
+					reason: "landmark-not-found",
+					landmarkKey,
+				};
+			}
+
+			const sensorHeading = sensorInfo.compassHeading;
+			if (sensorHeading === null) {
+				return {
+					success: false,
+					reason: "sensor-unavailable",
+					landmarkKey,
+				};
+			}
+
+			const actualAngle = calculateLandmarkAngle(landmark, CALIBRATION_COORD_MAP);
+			const offset = shortestAngleDifference(actualAngle, sensorHeading);
+			const calibratedHeading = normalizeAngle(sensorHeading + offset);
+
+			setCalibrationOffset(offset);
+			setCalibratedLandmarkKey(landmarkKey);
+			setCalibrationTimestamp(Date.now());
+
+			if (
+				!useManualRotation &&
+				sensorInfo.permissionState === "granted"
+			) {
+				setRotation(calibratedHeading);
+			}
+
+			return {
+				success: true,
+				offset,
+				actualAngle,
+				sensorHeading,
+				calibratedHeading,
+				landmarkKey,
+			};
+		},
+		[
+			sensorInfo.compassHeading,
+			sensorInfo.permissionState,
+			useManualRotation,
+			setRotation,
+		],
+	);
+
+	const resetCalibration = useCallback(() => {
+		setCalibrationOffset(0);
+		setCalibratedLandmarkKey(null);
+		setCalibrationTimestamp(null);
+
+		if (
+			!useManualRotation &&
+			sensorInfo.compassHeading !== null &&
+			sensorInfo.permissionState === "granted"
+		) {
+			setRotation(normalizeAngle(sensorInfo.compassHeading));
+		}
+	}, [
+		useManualRotation,
+		sensorInfo.compassHeading,
+		sensorInfo.permissionState,
+		setRotation,
+	]);
+
 	return {
 		rotation,
 		setRotation,
@@ -176,5 +298,10 @@ export function useNavigationState(): NavigationState {
 		displaySelectedKeys,
 		colorsByKey,
 		userId,
+		calibrationOffset,
+		calibratedLandmarkKey,
+		calibrationTimestamp,
+		calibrateWithLandmark,
+		resetCalibration,
 	};
 }

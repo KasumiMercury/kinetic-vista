@@ -24,6 +24,11 @@ export function SimpleNavigationApp({ onBack }: SimpleNavigationAppProps) {
 		color,
 		displaySelectedKeys,
 		colorsByKey,
+		calibrationOffset,
+		calibratedLandmarkKey,
+		calibrationTimestamp,
+		calibrateWithLandmark,
+		resetCalibration,
 	} = useNavigationState();
 	const isCompactLayout = useMediaQuery("(max-width: 768px)");
 	const effectiveRotation = useManualRotation ? rotation : smoothRotation;
@@ -55,6 +60,12 @@ export function SimpleNavigationApp({ onBack }: SimpleNavigationAppProps) {
 				isCompact={isCompactLayout}
 				mode={useCameraControls ? "sensor" : "drag"}
 				permissionState={sensorInfo.permissionState}
+				selectedLandmarkKey={selectedLandmarks[0] ?? null}
+				onCalibrate={calibrateWithLandmark}
+				calibrationOffset={calibrationOffset}
+				calibratedLandmarkKey={calibratedLandmarkKey}
+				calibrationTimestamp={calibrationTimestamp}
+				onResetCalibration={resetCalibration}
 				onChange={async (mode) => {
 					if (mode === "sensor") {
 						setUseCameraControls(true);
