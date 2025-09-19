@@ -1,13 +1,7 @@
 import { useMemo } from "react";
-import { getLandmarkAngles, type CoordMap } from "../utils/landmarkAngles";
+import { getLandmarkAngles, type CoordMap } from "./landmarkAngles";
 
-type RawLandmarkAngle = ReturnType<typeof getLandmarkAngles>[number];
-
-export type VisibleLandmark = RawLandmarkAngle & {
-	positionPercent: number;
-};
-
-type UseLandmarkDirectionDataOptions = {
+export type LandmarkDirectionOptions = {
 	cameraRotation: number;
 	selectedLandmarks: string[];
 	mySelectedKeys?: string[];
@@ -17,7 +11,11 @@ type UseLandmarkDirectionDataOptions = {
 	viewAngleRange?: number;
 };
 
-export function useLandmarkDirectionData({
+export type VisibleLandmark = ReturnType<typeof getLandmarkAngles>[number] & {
+	positionPercent: number;
+};
+
+export function useLandmarkDirection({
 	cameraRotation,
 	selectedLandmarks,
 	mySelectedKeys = [],
@@ -25,7 +23,7 @@ export function useLandmarkDirectionData({
 	scale = { sx: 1, sz: 1 },
 	yawRad = 0,
 	viewAngleRange = 90,
-}: UseLandmarkDirectionDataOptions) {
+}: LandmarkDirectionOptions) {
 	const landmarkAngles = useMemo(
 		() =>
 			getLandmarkAngles(

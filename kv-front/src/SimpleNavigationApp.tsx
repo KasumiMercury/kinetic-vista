@@ -46,6 +46,7 @@ export function SimpleNavigationApp({ onBack }: SimpleNavigationAppProps) {
 				mySelectedKeys={selectedLandmarks}
 				color={color}
 				colorsByKey={colorsByKey}
+				coordMap={{ xKey: "x", zKey: "y", invertZ: true }}
 				interactive={!useCameraControls}
 				onRotationChange={setRotation}
 			/>

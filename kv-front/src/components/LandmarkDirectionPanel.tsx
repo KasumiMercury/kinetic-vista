@@ -1,4 +1,4 @@
-import { useLandmarkDirectionData } from "../hooks/useLandmarkDirectionData";
+import { useLandmarkDirection } from "../hooks/useLandmarkDirection";
 import type { CoordMap } from "../utils/landmarkAngles";
 import { hexToRgba } from "../utils/userColor";
 
@@ -34,7 +34,7 @@ export function LandmarkDirectionPanel({
 		nearestLandmark,
 		showLeftIndicator,
 		showRightIndicator,
-	} = useLandmarkDirectionData({
+	} = useLandmarkDirection({
 		cameraRotation,
 		selectedLandmarks,
 		mySelectedKeys,
