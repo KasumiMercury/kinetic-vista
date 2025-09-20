@@ -1,4 +1,10 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from "react";
+import {
+	forwardRef,
+	useCallback,
+	useEffect,
+	useImperativeHandle,
+	useRef,
+} from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
@@ -52,7 +58,10 @@ export const DirectionalColorMaterial = forwardRef<
 		const wireframeOpacityRef = useRef(wireframeOpacity);
 		const wireframeThicknessRef = useRef(wireframeThickness);
 
-		useImperativeHandle(ref, () => materialRef.current as THREE.MeshStandardMaterial);
+		useImperativeHandle(
+			ref,
+			() => materialRef.current as THREE.MeshStandardMaterial,
+		);
 
 		const detachWireframe = useCallback(() => {
 			const segments = wireframeSegmentsRef.current;
@@ -77,12 +86,12 @@ export const DirectionalColorMaterial = forwardRef<
 				lineGeometry.fromWireframeGeometry(wireframeGeometry);
 				lineGeometry.userData.sourceGeometryUuid = mesh.geometry.uuid;
 				wireframeGeometry.dispose();
-					const lineMaterial = new LineMaterial({
-						color: new THREE.Color(wireframeColorRef.current),
-						transparent: wireframeOpacityRef.current < 1,
-						opacity: wireframeOpacityRef.current,
-						linewidth: wireframeThicknessRef.current,
-					});
+				const lineMaterial = new LineMaterial({
+					color: new THREE.Color(wireframeColorRef.current),
+					transparent: wireframeOpacityRef.current < 1,
+					opacity: wireframeOpacityRef.current,
+					linewidth: wireframeThicknessRef.current,
+				});
 				lineMaterial.depthTest = true;
 				lineMaterial.depthWrite = false;
 				lineMaterial.needsUpdate = true;
@@ -183,7 +192,8 @@ export const DirectionalColorMaterial = forwardRef<
 			if (
 				existingMesh &&
 				existingSegments &&
-				existingSegments.geometry.userData?.sourceGeometryUuid !== existingMesh.geometry.uuid
+				existingSegments.geometry.userData?.sourceGeometryUuid !==
+					existingMesh.geometry.uuid
 			) {
 				attachWireframe(existingMesh);
 				return;

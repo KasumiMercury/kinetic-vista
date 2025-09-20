@@ -1,6 +1,8 @@
 import { LandmarkPanel } from "./components/LandmarkPanel";
 import { OptionPanel } from "./components/OptionPanel";
 import LandmarkDirectionFullScreen from "./components/LandmarkDirectionFullScreen";
+import { PermissionRequestOverlay } from "./components/PermissionRequestOverlay";
+import { PermissionDeniedOverlay } from "./components/PermissionDeniedOverlay";
 import { useMediaQuery } from "./hooks/useMediaQuery";
 import { useNavigationState } from "./hooks/useNavigationState";
 
@@ -43,6 +45,28 @@ export function SimpleNavigationApp({ onBack }: SimpleNavigationAppProps) {
 				>
 					戻る
 				</button>
+			)}
+
+			{useCameraControls &&
+				sensorInfo.permissionState === "needs-permission" && (
+					<PermissionRequestOverlay
+						sensorTypeLabel={
+							sensorInfo.sensorType === "absolute-orientation"
+								? "AbsoluteOrientationSensor"
+								: "DeviceOrientationEvent"
+						}
+						onRequestPermission={requestPermission}
+					/>
+				)}
+
+			{useCameraControls && sensorInfo.permissionState === "denied" && (
+				<PermissionDeniedOverlay
+					onTryAgain={requestPermission}
+					onUseManualControl={() => {
+						setUseManualRotation(true);
+						setUseCameraControls(false);
+					}}
+				/>
 			)}
 
 			<LandmarkDirectionFullScreen

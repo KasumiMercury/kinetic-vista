@@ -16,9 +16,9 @@ export function SkyWireframeShell({
 	radius = 60,
 	widthSegments = 96,
 	heightSegments = 64,
-		wireframeColor = "#ffffff",
-		wireframeOpacity = 0.45,
-		wireframeThickness = 2.8,
+	wireframeColor = "#ffffff",
+	wireframeOpacity = 0.45,
+	wireframeThickness = 2.8,
 	shellOpacity = 0.04,
 }: SkyWireframeShellProps) {
 	const geometry = useMemo(() => {
