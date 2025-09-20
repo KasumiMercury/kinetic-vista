@@ -1,9 +1,10 @@
 import type { JSX } from "react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { ControlModeToggle } from "./ControlModeToggle";
 import { CalibrationModal } from "./CalibrationModal";
 import type { CalibrationResult } from "../hooks/useNavigationState";
 import loc from "../assets/landmark.json";
+import { useOutsideClick } from "../hooks/useOutsideClick";
 
 const LANDMARKS = loc as Record<string, { displayJP?: string }>;
 
@@ -42,6 +43,12 @@ export function OptionPanel({
 }: OptionPanelProps): JSX.Element {
 	const [isCollapsed, setIsCollapsed] = useState(true);
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const containerRef = useRef<HTMLDivElement>(null);
+	const collapse = useCallback(() => {
+		setIsCollapsed(true);
+	}, []);
+
+	useOutsideClick(containerRef, collapse, !isCollapsed);
 	const positionClassName = isCompact ? "right-4 top-20" : "right-4 bottom-4";
 	const containerClassName = `fixed ${positionClassName} z-[10000] rounded-lg bg-black/70 text-white shadow-xl`;
 
@@ -84,7 +91,7 @@ export function OptionPanel({
 	}, [selectedLandmarkKey, calibratedLandmarkKey, landmarkOptions]);
 
 	return (
-		<div className={containerClassName}>
+		<div ref={containerRef} className={containerClassName}>
 			{/* 設定ボタン（折りたたみ時） */}
 			{isCollapsed ? (
 				<button

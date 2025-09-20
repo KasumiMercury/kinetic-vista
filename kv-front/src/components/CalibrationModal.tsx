@@ -1,5 +1,6 @@
-import { useEffect, useId, useMemo, useState, type JSX } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type JSX } from "react";
 import type { CalibrationResult } from "../hooks/useNavigationState";
+import { useOutsideClick } from "../hooks/useOutsideClick";
 
 type CalibrationModalProps = {
 	isOpen: boolean;
@@ -49,6 +50,9 @@ export function CalibrationModal({
 		return `${sign}${result.offset.toFixed(1)}°`;
 	}, [result]);
 
+	const contentRef = useRef<HTMLDivElement>(null);
+	useOutsideClick(contentRef, onClose, isOpen);
+
 	if (!isOpen) return null;
 
 	const handleCalibrate = async () => {
@@ -79,7 +83,10 @@ export function CalibrationModal({
 
 	return (
 		<div className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/70 px-4">
-			<div className="w-full max-w-md rounded-lg bg-neutral-900 p-5 text-white shadow-2xl">
+			<div
+				ref={contentRef}
+				className="w-full max-w-md rounded-lg bg-neutral-900 p-5 text-white shadow-2xl"
+			>
 				<div className="flex items-center justify-between">
 					<h2 className="text-lg font-semibold">キャリブレーション</h2>
 					<button
@@ -128,11 +135,20 @@ export function CalibrationModal({
 					</button>
 				</div>
 				{status === "success" && result?.success && (
-					<div className="mt-4 space-y-1 rounded-md border border-emerald-400/40 bg-emerald-500/10 p-3 text-xs text-emerald-100">
-						<div>センサー値: {result.sensorHeading.toFixed(1)}°</div>
-						<div>ランドマーク角度: {result.actualAngle.toFixed(1)}°</div>
-						<div>算出オフセット: {offsetLabel}</div>
-						<div>補正後の向き: {result.calibratedHeading.toFixed(1)}°</div>
+					<div className="mt-4 space-y-3">
+						<div className="space-y-1 rounded-md border border-emerald-400/40 bg-emerald-500/10 p-3 text-xs text-emerald-100">
+							<div>センサー値: {result.sensorHeading.toFixed(1)}°</div>
+							<div>ランドマーク角度: {result.actualAngle.toFixed(1)}°</div>
+							<div>算出オフセット: {offsetLabel}</div>
+							<div>補正後の向き: {result.calibratedHeading.toFixed(1)}°</div>
+						</div>
+						<button
+							type="button"
+							onClick={onClose}
+							className="w-full rounded-md bg-emerald-500 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-400"
+						>
+							完了
+						</button>
 					</div>
 				)}
 				{status === "pending" && (

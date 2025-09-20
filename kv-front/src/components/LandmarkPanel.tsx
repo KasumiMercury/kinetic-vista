@@ -1,7 +1,8 @@
 import type { JSX } from "react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import loc from "../assets/landmark.json";
 import { hexToRgba } from "../utils/userColor";
+import { useOutsideClick } from "../hooks/useOutsideClick";
 
 type LandmarkPanelProps = {
 	selectedKeys: string[];
@@ -21,6 +22,10 @@ export function LandmarkPanel({
 }: LandmarkPanelProps): JSX.Element {
 	const [isCollapsed, setIsCollapsed] = useState(true);
 	const data = loc as unknown as LocData;
+	const containerRef = useRef<HTMLDivElement>(null);
+	const collapse = useCallback(() => setIsCollapsed(true), []);
+
+	useOutsideClick(containerRef, collapse, !isCollapsed);
 
 	const items = useMemo(
 		() =>
@@ -39,7 +44,10 @@ export function LandmarkPanel({
 	};
 
 	return (
-		<div className="fixed bottom-4 left-4 z-[10000] w-[280px] rounded-lg bg-black/70 text-white shadow-xl">
+		<div
+			ref={containerRef}
+			className="fixed bottom-4 left-4 z-[10000] w-[280px] rounded-lg bg-black/70 text-white shadow-xl"
+		>
 			{/* ヘッダー */}
 			<button
 				type="button"
