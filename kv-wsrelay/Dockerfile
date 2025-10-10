@@ -1,4 +1,4 @@
-FROM golang:1.25.1-alpine AS builder
+FROM golang:1.25.2-alpine AS builder
 WORKDIR /app
 RUN apk update && apk add --no-cache ca-certificates
 
@@ -9,7 +9,7 @@ COPY . .
 ENV CGO_ENABLED=0
 RUN go build -trimpath -ldflags="-s -w" -o /app/kv-wsrelay .
 
-FROM golang:1.25.1-alpine AS development
+FROM golang:1.25.2-alpine AS development
 ENV CGO_ENABLED=0
 WORKDIR /app
 RUN apk update && apk add --no-cache bash && \
